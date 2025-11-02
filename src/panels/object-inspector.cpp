@@ -1,4 +1,5 @@
 #include "object-inspector.h"
+#include "../utilities/hson.h"
 
 using namespace ulvl;
 
@@ -143,22 +144,49 @@ bool ObjectInspector::ParamEditor(const char* name, hl::hson::parameter& param, 
 	case hl::hson::parameter_type::string:
 		changed |= Editor(name, param.value_string());
 		break;
-	case hl::hson::parameter_type::array:
+	case hl::hson::parameter_type::array: {
 		ImGui::BeginGroup();
-		if (ImGui::TreeNode(name)) {
+
+		bool isOpen{ ImGui::TreeNode(name) };
+
+		if (fieldDef.array_count() == 0 && ImGui::BeginPopupContextItem("Parameter array menu")) {
+			if (ImGui::MenuItem("Add"))
+				param.value_array().push_back(ut::createParameterByType(fieldDef.subtype().c_str()));
+
+			if (ImGui::MenuItem("Clear", "", nullptr, param.value_array().size() > 0))
+				param.value_array().clear();
+
+			ImGui::EndPopup();
+		}
+
+		if (isOpen) {
+			int removeIndex{ -1 };
 			size_t m{ 0 };
 			for (auto& parameter : param.value_array()) {
 				ImGui::PushID(m);
 				hl::reflect::field_definition aFieldDef{};
 				aFieldDef.set_type(fieldDef.subtype());
+				ImGui::BeginGroup();
 				changed |= ParamEditor("##", parameter, aFieldDef);
+				ImGui::EndGroup();
+
+				if (fieldDef.array_count() == 0 && ImGui::BeginPopupContextItem("Parameter array item menu")) {
+					if (ImGui::MenuItem("Remove"))
+						removeIndex = m;
+
+					ImGui::EndPopup();
+				}
+
 				ImGui::PopID();
 				m++;
 			}
+			if (removeIndex != -1)
+				param.value_array().erase(param.value_array().begin() + removeIndex);
 			ImGui::TreePop();
 		}
 		ImGui::EndGroup();
 		break;
+	}
 	case hl::hson::parameter_type::object:
 		if (ImGui::TreeNode(name)) {
 			changed |= StructEditor(param.value_object(), hsonTemplate->structs[fieldDef.type()]);

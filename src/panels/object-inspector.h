@@ -27,6 +27,7 @@ namespace ulvl {
 
 			if (selected->hson->name.has_value())
 				Editor("Name", selected->hson->name.value());
+
 			Editor("Type", selected->hson->type.c_str());
 
 			auto localPos = selected->getLocalPosition();
