@@ -92,7 +92,8 @@ bool Graphics::init() {
     // imgui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     ImGui::StyleColorsDark();
 
@@ -147,12 +148,32 @@ void Graphics::renderBegin()
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
 
+    ImGuiViewport* imguiViewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(imguiViewport->Pos);
+    ImGui::SetNextWindowSize(imguiViewport->Size);
+    ImGui::SetNextWindowViewport(imguiViewport->ID);
+
+    ImGuiWindowFlags windowFlags = 
+        ImGuiWindowFlags_NoDocking  | ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove     | ImGuiWindowFlags_NoBringToFrontOnFocus |
+        ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
+    ImGui::Begin("DockSpace Window", nullptr, windowFlags);
+    ImGui::PopStyleVar(3);
+
+    ImGui::DockSpace(ImGui::GetID("DockSpace"), { 0, 0 }, ImGuiDockNodeFlags_PassthruCentralNode);
+
     ImGuizmo::BeginFrame();
     ImGuizmo::SetRect(0, 0, (float)width, (float)height);
 }
 
 void Graphics::renderEnd()
 {
+    ImGui::End();
     ImGui::Render();
     ImGui_ImplPlume_RenderDrawData(ImGui::GetDrawData(), renderCtx.commandList.get());
 

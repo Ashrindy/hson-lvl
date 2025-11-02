@@ -10,6 +10,7 @@ void CameraService::AddCallback() {
     Application::instance->addListener(this);
 }
 
+static bool mouseAlreadyHeld{ false };
 void CameraService::Update() {
     ImGuiIO& io{ ImGui::GetIO() };
     if (io.WantCaptureKeyboard) return;
@@ -28,13 +29,17 @@ void CameraService::Update() {
     if (state[SDL_SCANCODE_SPACE]) camera->addPosition(cameraSpeed * glm::vec3{ 0,1,0 });
     if (state[SDL_SCANCODE_LCTRL]) camera->addPosition(cameraSpeed * glm::vec3{ 0,-1,0 });
 
-    if (io.WantCaptureMouse) return;
+    if (io.WantCaptureMouse && !mouseAlreadyHeld) return;
 
     // Mouse capture
-    if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_RIGHT)
+    if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_RIGHT) {
+        mouseAlreadyHeld = true;
         SDL_SetWindowRelativeMouseMode(graphics->window, true);
-    else
+    }
+    else {
+        mouseAlreadyHeld = false;
         SDL_SetWindowRelativeMouseMode(graphics->window, false);
+    }
 }
 
 void CameraService::EventCallback(SDL_Event e) {
@@ -45,32 +50,37 @@ void CameraService::EventCallback(SDL_Event e) {
 
     switch (e.type) {
     case SDL_EVENT_MOUSE_MOTION:
-        if (io.WantCaptureMouse) break;
-        if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_RIGHT)
+    {
+        if (io.WantCaptureMouse && !mouseAlreadyHeld) break;
+        double xpos = e.motion.x;
+        double ypos = e.motion.y;
+
+        if (firstMouse)
         {
-            double xpos = e.motion.x;
-            double ypos = e.motion.y;
-
-            if (firstMouse)
-            {
-                lastX = xpos;
-                lastY = ypos;
-                firstMouse = false;
-            }
-
-            float xoffset = static_cast<float>(xpos - lastX);
-            float yoffset = -static_cast<float>(ypos - lastY);
             lastX = xpos;
             lastY = ypos;
+            firstMouse = false;
+        }
 
-            const float sensitivity = 0.01f;
+        float xoffset = static_cast<float>(xpos - lastX);
+        float yoffset = -static_cast<float>(ypos - lastY);
+        lastX = xpos;
+        lastY = ypos;
+
+        const float sensitivity = 0.01f;
+        if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_RIGHT)
+        {
+            mouseAlreadyHeld = true;
             graphics->camera->addRotation(glm::vec3{
                 yoffset * sensitivity,
                 xoffset * sensitivity,
                 0.0f
                 });
         }
+        else
+            mouseAlreadyHeld = false;
         break;
+    } 
 
     case SDL_EVENT_MOUSE_WHEEL:
         if (io.WantCaptureMouse) break;

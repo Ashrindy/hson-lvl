@@ -150,10 +150,10 @@ bool ObjectInspector::ParamEditor(const char* name, hl::hson::parameter& param, 
 		bool isOpen{ ImGui::TreeNode(name) };
 
 		if (fieldDef.array_count() == 0 && ImGui::BeginPopupContextItem("Parameter array menu")) {
-			if (ImGui::MenuItem("Add"))
+			if (changed |= ImGui::MenuItem("Add"))
 				param.value_array().push_back(ut::createParameterByType(fieldDef.subtype().c_str()));
 
-			if (ImGui::MenuItem("Clear", "", nullptr, param.value_array().size() > 0))
+			if (changed |= ImGui::MenuItem("Clear", "", nullptr, param.value_array().size() > 0))
 				param.value_array().clear();
 
 			ImGui::EndPopup();
@@ -180,8 +180,10 @@ bool ObjectInspector::ParamEditor(const char* name, hl::hson::parameter& param, 
 				ImGui::PopID();
 				m++;
 			}
-			if (removeIndex != -1)
+			if (removeIndex != -1) {
+				changed |= true;
 				param.value_array().erase(param.value_array().begin() + removeIndex);
+			}
 			ImGui::TreePop();
 		}
 		ImGui::EndGroup();
