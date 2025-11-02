@@ -1,8 +1,11 @@
 #include "app.h"
+#include "panels/object-list.h"
 #include "panels/object-inspector.h"
 #include "app/camera-service.h"
 #include "app/object-service.h"
 #include "app/project-manager.h"
+#include "app/object-selection-manager.h"
+#include "app/template-manager.h"
 #include <imgui_impl_sdl3.h>
 
 using namespace ulvl;
@@ -15,12 +18,19 @@ void Application::init() {
 
     instance = this;
 
+    addPanel<ObjectList>();
     addPanel<ObjectInspector>();
 
     addService<app::CameraService>();
     addService<app::ObjectService>();
     addService<app::ProjectManager>();
+    addService<app::ObjectSelectionManager>();
+    addService<app::TemplateManager>();
+
     getService<app::ProjectManager>()->loadProject("E:\\Steam\\steamapps\\common\\SonicFrontiers\\image\\x64\\raw\\gedit\\w6d01_gedit\\w6d01_obj_area01.hson");
+    getService<app::TemplateManager>()->loadTemplate("rangers");
+    /*getService<app::ProjectManager>()->loadProject("D:\\gens-hson\\bin\\Debug\\net8.0\\test.hson");
+    getService<app::TemplateManager>()->loadTemplate("gens");*/
 }
 
 void Application::loop()

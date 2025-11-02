@@ -57,6 +57,7 @@ namespace ulvl::gfx {
 		void setRotation(const glm::quat& rot);
 		void setRotation(const glm::vec3& rot);
 		void setScale(const glm::vec3& scale);
+		void setWorldMatrix(const glm::mat4& mat);
 
 		void addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount, void* texture);
 		size_t getVertexLayoutOffset(const char* semanticName) const;

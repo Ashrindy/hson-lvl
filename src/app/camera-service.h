@@ -5,6 +5,8 @@
 namespace ulvl::app {
 	class CameraService : public Service, public ApplicationListener {
 	public:
+		float cameraSpeed{ 2.5f };
+
 		virtual void AddCallback() override;
 		virtual void Update() override;
 		virtual void EventCallback(SDL_Event e) override;

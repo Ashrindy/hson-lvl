@@ -12,6 +12,7 @@ add_executable (${HE_LEVEL_NAME}
 	"log.cpp" 
 	"graphics/model.h" 
 	"graphics/model.cpp"
+    "panels/object-list.h"
     "panels/object-inspector.h"
 	"graphics/shaders/vs.h"
 	"graphics/shaders/ps.h"
@@ -29,7 +30,15 @@ add_executable (${HE_LEVEL_NAME}
  	"app/object-service.cpp"
 	"app/project-manager.h" 
 	"app/project-manager.cpp"
-)
+	"app/object-selection-manager.h"
+	"app/object-selection-manager.cpp"
+	"ui/editors/glm.h" 
+	"ui/editors/glm.cpp" 
+	"ui/editors/basic.h"
+	"ui/editors/basic.cpp"
+	"app/template-manager.h"
+	"app/template-manager.cpp"
+ "panels/object-inspector.cpp")
 
 target_precompile_headers(${HE_LEVEL_NAME} PRIVATE "pch.h")
 

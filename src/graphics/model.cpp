@@ -1,6 +1,6 @@
 #include "model.h"
 #include <glm/gtx/quaternion.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 #include "graphics.h"
 #include "shaders/vs.h"
 #include "shaders/ps_color.h"
@@ -124,6 +124,13 @@ void Model::setRotation(const glm::vec3& rot) {
 void Model::setScale(const glm::vec3& scale) {
 	this->scale = scale;
 	updateWorldMatrix();
+}
+
+void Model::setWorldMatrix(const glm::mat4& mat) {
+    worldMatrix = mat;
+    glm::vec3 skew{};
+    glm::vec4 perspective{};
+    glm::decompose(worldMatrix, scale, rotation, position, skew, perspective);
 }
 
 void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount, void* texture) {

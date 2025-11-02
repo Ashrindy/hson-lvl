@@ -17,7 +17,7 @@ void CameraService::Update() {
     auto* graphics = Graphics::instance;
     auto* camera = graphics->camera;
     auto& frameTimer = Application::instance->frameTimer;
-    const float cameraSpeed = 2.5f * frameTimer.deltaTime;
+    const float cameraSpeed = this->cameraSpeed * frameTimer.deltaTime;
 
     const bool* state = SDL_GetKeyboardState(NULL);
 
@@ -74,9 +74,9 @@ void CameraService::EventCallback(SDL_Event e) {
 
     case SDL_EVENT_MOUSE_WHEEL:
         if (io.WantCaptureMouse) break;
-        graphics->camera->setFov(graphics->camera->fov - static_cast<float>(e.wheel.y));
-        if (graphics->camera->fov < 1.0f) graphics->camera->setFov(1.0f);
-        if (graphics->camera->fov > 90.0f) graphics->camera->setFov(90.0f);
+        this->cameraSpeed += static_cast<float>(e.wheel.y);
+        if (this->cameraSpeed < 1.0f) this->cameraSpeed = 1.0f;
+        if (this->cameraSpeed > 60.0f) this->cameraSpeed = 60.0f;
         break;
     }
 }
