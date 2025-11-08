@@ -176,6 +176,13 @@ void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices
     updateAabb();
 }
 
+void Model::clearMeshes() {
+    meshes.clear();
+    vertexCount = 0;
+    delete vertices;
+    indices.clear();
+}
+
 size_t Model::getVertexLayoutOffset(const char* semanticName) const {
     for (auto& l : vertexLayout)
         if (strcmp(l.semanticName, semanticName) == 0)

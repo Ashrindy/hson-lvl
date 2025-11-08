@@ -1,4 +1,5 @@
 #include "object-service.h"
+#include "template-manager.h"
 #include "../app.h"
 #include "../graphics/graphics.h"
 #include <glm/gtc/quaternion.hpp>
@@ -9,19 +10,7 @@ using namespace ulvl::app;
 ObjectService::Object::Object(const hl::guid& guid, hl::hson::object* object) : guid{ guid }, hson { object } {
 	model = new gfx::Model{};
 
-    gfx::BaseVertex vertices[]{
-        {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}},
-        {{ 0.5f, -0.5f, 0.0f}, {1.0f, 0.0f}},
-        {{ 0.5f,  0.5f, 0.0f}, {1.0f, 1.0f}},
-        {{-0.5f,  0.5f, 0.0f}, {0.0f, 1.0f}}
-    };
-
-    unsigned short indices[]{
-        0, 1, 2,
-        2, 3, 0
-    };
-
-    model->addMesh(vertices, ARRAY_SIZE(vertices), indices, ARRAY_SIZE(indices), nullptr);
+    updateModel();
 
     model->setWorldMatrix(getWorldMatrix());
 
@@ -133,6 +122,32 @@ void ObjectService::Object::updateChildren() {
     for (auto* obj : objService->objects)
         if (obj->getParent() == this)
             children.push_back(obj);
+}
+
+void ObjectService::Object::updateModel() {
+    model->clearMeshes();
+
+    ModelData modelData = Application::instance->getService<TemplateManager>()->currentTemplate->getModelData(this);
+    if (modelData.vertices != nullptr) {
+        model->addMesh(modelData.vertices, modelData.vertexCount, modelData.indices, modelData.indexCount, nullptr);
+        delete modelData.vertices;
+        delete modelData.indices;
+    }
+    else {
+        gfx::BaseVertex vertices[]{
+            {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}},
+            {{ 0.5f, -0.5f, 0.0f}, {1.0f, 0.0f}},
+            {{ 0.5f,  0.5f, 0.0f}, {1.0f, 1.0f}},
+            {{-0.5f,  0.5f, 0.0f}, {0.0f, 1.0f}}
+        };
+
+        unsigned short indices[]{
+            0, 1, 2,
+            2, 3, 0
+        };
+
+        model->addMesh(vertices, ARRAY_SIZE(vertices), indices, ARRAY_SIZE(indices), nullptr);
+    }
 }
 
 ObjectService::Object* ObjectService::addObject(const hl::guid& guid, hl::hson::object* hson) {

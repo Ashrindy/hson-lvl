@@ -29,8 +29,8 @@ void Application::init() {
     addService<app::ObjectSelectionManager>();
     addService<app::TemplateManager>();
 
-    getService<app::ProjectManager>()->loadProject("E:\\Steam\\steamapps\\common\\SonicFrontiers\\image\\x64\\raw\\gedit\\w6d01_gedit\\w6d01_obj_area01.hson");
     getService<app::TemplateManager>()->loadTemplate("rangers");
+    getService<app::ProjectManager>()->loadProject("E:\\Steam\\steamapps\\common\\SonicFrontiers\\image\\x64\\raw\\gedit\\w6d01_gedit\\w6d01_obj_area01.hson");
     /*getService<app::ProjectManager>()->loadProject("D:\\gens-hson\\bin\\Debug\\net8.0\\test.hson");
     getService<app::TemplateManager>()->loadTemplate("gens");*/
 }

@@ -60,6 +60,7 @@ namespace ulvl::gfx {
 		void setWorldMatrix(const glm::mat4& mat);
 
 		void addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount, void* texture);
+		void clearMeshes();
 		size_t getVertexLayoutOffset(const char* semanticName) const;
 		inline const glm::mat4& getWorldMatrix() const { return worldMatrix; }
 

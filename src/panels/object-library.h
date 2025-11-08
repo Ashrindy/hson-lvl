@@ -10,13 +10,13 @@ namespace ulvl {
 			return { .name = "Object Library", .position = { 150, 100 }, .size = { 100, 350 }, .pivot{ 0, 0 } };
 		}
 
-		void RenderTreeNode(app::TemplateManager::Template::TreeNode* node) {
+		void RenderTreeNode(app::Template::TreeNode* node) {
 			ImGuiTreeNodeFlags flags{};
-			if (node->type == app::TemplateManager::Template::TreeNode::NodeType::OBJECT)
+			if (node->type == app::Template::TreeNode::NodeType::OBJECT)
 				flags |= ImGuiTreeNodeFlags_Leaf;
 
 			if (ImGui::TreeNodeEx(node->name, flags)) {
-				if (node->type == app::TemplateManager::Template::TreeNode::NodeType::CATEGORY)
+				if (node->type == app::Template::TreeNode::NodeType::CATEGORY)
 					for (auto* nodes : node->childNodes)
 						RenderTreeNode(nodes);
 
@@ -28,7 +28,7 @@ namespace ulvl {
 			auto* app = Application::instance;
 			auto* tem = app->getService<app::TemplateManager>()->currentTemplate;
 
-			for (auto* node : tem->tree)
+			for (auto* node : tem->objectTree.tree)
 				RenderTreeNode(node);
 		}
 	};

@@ -38,7 +38,17 @@ add_executable (${HE_LEVEL_NAME}
 	"ui/editors/basic.cpp"
 	"app/template-manager.h"
 	"app/template-manager.cpp"
- "panels/object-inspector.cpp" "utilities/hson.h" "utilities/hson.cpp" "panels/object-library.h")
+	"panels/object-inspector.cpp" 
+	"utilities/hson.h" 
+	"utilities/hson.cpp" 
+	"panels/object-library.h" 
+	"app/template/template.h"
+	"app/template/template.cpp"
+	"app/template/squirrelwrap.h"
+	"app/template/squirrelwrap.cpp"
+	"app/template/sq-funcs.h"
+	"app/template/sq-funcs.cpp"
+ "app/template/sq-types.h")
 
 target_precompile_headers(${HE_LEVEL_NAME} PRIVATE "pch.h")
 

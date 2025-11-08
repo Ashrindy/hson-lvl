@@ -41,7 +41,8 @@ namespace ulvl {
 			ImGui::SeparatorText("Parameters");
 
 			auto* hsonTemplate = Application::instance->getService<app::TemplateManager>()->currentTemplate->hsonTemplate;
-			StructEditor(selected->hson->parameters, hsonTemplate->structs[hsonTemplate->operator[](selected->hson->type).structType]);
+			if (StructEditor(selected->hson->parameters, hsonTemplate->structs[hsonTemplate->operator[](selected->hson->type).structType]))
+				selected->updateModel();
 		}
 	};
 }

@@ -35,6 +35,7 @@ namespace ulvl::app {
 
 				return std::string{ hson->type + " - " + guid.as_string() };
 			}
+			void updateModel();
 		};
 
 		std::vector<Object*> objects;
