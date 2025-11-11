@@ -1,4 +1,8 @@
 #include "graphics.h"
+#include "../ui/toolbar.h"
+
+#include "fonts/Inter.h"
+//#include "fonts/NotoSansJP.h"
 
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
@@ -35,6 +39,45 @@ void Graphics::createFramebuffers(){
     }
 }
 
+void ulvl::gfx::Graphics::createScreenFramebuffers() {
+    if (!renderCtx.screenTex.get()) {
+        plume::RenderTextureDesc texDesc{};
+        texDesc.dimension = plume::RenderTextureDimension::TEXTURE_2D;
+        texDesc.width = screenWidth;
+        texDesc.height = screenHeight;
+        texDesc.arraySize = 1;
+        texDesc.depth = 1;
+        texDesc.mipLevels = 1;
+        texDesc.format = plume::RenderFormat::B8G8R8A8_UNORM;
+        texDesc.flags = plume::RenderTextureFlag::RENDER_TARGET;
+        renderCtx.screenTex = renderCtx.device->createTexture(texDesc);
+    }
+
+    if (!renderCtx.screenFb.get()) {
+        plume::RenderFramebufferDesc fbDesc{};
+        const plume::RenderTexture* attachments = renderCtx.screenTex.get();
+        fbDesc.colorAttachments = &attachments;
+        fbDesc.colorAttachmentsCount = 1;
+        renderCtx.screenFb = renderCtx.device->createFramebuffer(fbDesc);
+    }
+
+    if (renderCtx.screenDs) {
+        renderCtx.screenDs->setTexture(0, renderCtx.screenTex.get(), plume::RenderTextureLayout::COLOR_WRITE);
+        return;
+    }
+
+    plume::RenderDescriptorRange dr{};
+    dr.type = plume::RenderDescriptorRangeType::TEXTURE;
+    dr.count = 1;
+
+    plume::RenderDescriptorSetDesc dcDesc{};
+    dcDesc.descriptorRanges = &dr;
+    dcDesc.descriptorRangesCount = 1;
+    renderCtx.screenDs = renderCtx.device->createDescriptorSet(dcDesc);
+
+    renderCtx.screenDs->setTexture(0, renderCtx.screenTex.get(), plume::RenderTextureLayout::COLOR_WRITE);
+}
+
 void Graphics::resize(unsigned int width, unsigned int height) {
     this->width = width;
     this->height = height;
@@ -49,6 +92,22 @@ void Graphics::resize(unsigned int width, unsigned int height) {
     }
 }
 
+void Graphics::resizeScreen(unsigned int width, unsigned int height) {
+    screenWidth = width;
+    screenHeight = height;
+
+    renderCtx.screenFb.reset();
+    renderCtx.screenTex.reset();
+    createScreenFramebuffers();
+    if (camera)
+        camera->setAspectRatio((float)width / (float)height);
+}
+
+void Graphics::reposScreen(unsigned int x, unsigned int y) {
+    screenPosX = x;
+    screenPosY = y;
+}
+
 void Graphics::initializeRenderResources() {
     renderCtx.device = renderCtx.renderInterface->createDevice();
     renderCtx.commandQueue = renderCtx.device->createCommandQueue(plume::RenderCommandListType::DIRECT);
@@ -59,12 +118,23 @@ void Graphics::initializeRenderResources() {
     renderCtx.acquireSemaphore = renderCtx.device->createCommandSemaphore();
     renderCtx.commandFence = renderCtx.device->createCommandFence();
     createFramebuffers();
+    createScreenFramebuffers();
 
     plume::RenderBufferDesc cBufferDesc{};
     cBufferDesc.size = sizeof(MainCBuffer);
     cBufferDesc.flags = plume::RenderBufferFlag::CONSTANT;
     cBufferDesc.heapType = plume::RenderHeapType::UPLOAD;
     renderCtx.mainCBuffer = renderCtx.device->createBuffer(cBufferDesc);
+}
+
+void Graphics::setUnsaved(bool unsaved) {
+    if (unsaved) {
+        char buffer[0x50];
+        snprintf(buffer, sizeof(buffer), "%s*", name);
+        SDL_SetWindowTitle(window, buffer);
+    }
+    else
+        SDL_SetWindowTitle(window, name);
 }
 
 bool Graphics::init() {
@@ -103,9 +173,23 @@ bool Graphics::init() {
         .device = renderCtx.device.get()
     };
     ImGui_ImplPlume_Init(initInfo);
+
+    io.Fonts->AddFontFromMemoryCompressedTTF((void*)InterFont_compressed_data, InterFont_compressed_size, 14);
+
+    // TODO: Find better font, NotoSansJP is really big and doesn't support all needed characters
+
+    /*ImWchar notosansRange[]{
+        0x0020, 0x00FF, 0x3000, 0x30FF, 0x31F0, 0x31FF, 0xFF00, 0xFFEF, 0x4E00, 0x9FAF
+    };
+    ImFontConfig cfg{};
+    cfg.MergeMode = true;
+    cfg.PixelSnapH = true;
+    cfg.RasterizerMultiply = 5;
+    io.Fonts->AddFontFromMemoryCompressedTTF((void*)NotoSansJPFont_compressed_data, NotoSansJPFont_compressed_size, 20, &cfg, notosansRange);*/
+
     ImGui_ImplPlume_CreateFontsTexture();
 
-    camera = new Camera{ width, height };
+    camera = new Camera{ screenWidth, screenHeight };
 
     instance = this;
 
@@ -116,9 +200,71 @@ static uint32_t imageIndex{ 0 };
 static plume::RenderTexture* swapChainTexture;
 void Graphics::renderBegin()
 {
-    renderCtx.swapChain->acquireTexture(renderCtx.acquireSemaphore.get(), &imageIndex);
-
     renderCtx.commandList->begin();
+
+    renderCtx.commandList->barriers(
+        plume::RenderBarrierStage::GRAPHICS,
+        plume::RenderTextureBarrier(renderCtx.screenTex.get(), plume::RenderTextureLayout::COLOR_WRITE)
+    );
+    renderCtx.commandList->setFramebuffer(renderCtx.screenFb.get());
+
+    uint32_t width{ screenWidth };
+    uint32_t height{ screenHeight };
+    const plume::RenderViewport viewport{ 0.0f, 0.0f, (float)width, (float)height };
+    const plume::RenderRect scissor{ 0, 0, (int32_t)width, (int32_t)height };
+
+    renderCtx.commandList->setViewports(viewport);
+    renderCtx.commandList->setScissors(scissor);
+
+    plume::RenderColor clearColor{ 0.1f, 0.12f, 0.15f, 1.0f };
+    renderCtx.commandList->clearColor(0, clearColor);
+
+    MainCBuffer* mainCbufferData = (MainCBuffer*)renderCtx.mainCBuffer->map();
+    mainCbufferData->view = camera->viewMatrix();
+    mainCbufferData->projection = camera->projMatrix();
+    renderCtx.mainCBuffer->unmap();
+
+    for (auto* model : models)
+        model->render();
+}
+
+void Graphics::renderEnd() {
+}
+
+void Graphics::renderUIBegin() {
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
+
+    ToolBar();
+
+    ImGuiViewport* imguiViewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(imguiViewport->Pos);
+    ImGui::SetNextWindowSize(imguiViewport->Size);
+    ImGui::SetNextWindowViewport(imguiViewport->ID);
+
+    ImGuiWindowFlags windowFlags =
+        ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
+        ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
+    ImGui::Begin("DockSpace Window", nullptr, windowFlags);
+    ImGui::PopStyleVar(3);
+
+    ImGui::SetCursorPosY(ImGui::GetFrameHeight());
+
+    ImGui::DockSpace(ImGui::GetID("DockSpace"), { 0, 0 }, ImGuiDockNodeFlags_PassthruCentralNode);
+}
+
+void Graphics::renderUIEnd()
+{
+    ImGui::End();
+    ImGui::Render();
+
+    renderCtx.swapChain->acquireTexture(renderCtx.acquireSemaphore.get(), &imageIndex);
 
     swapChainTexture = renderCtx.swapChain->getTexture(imageIndex);
     renderCtx.commandList->barriers(plume::RenderBarrierStage::GRAPHICS, plume::RenderTextureBarrier(swapChainTexture, plume::RenderTextureLayout::COLOR_WRITE));
@@ -137,44 +283,6 @@ void Graphics::renderBegin()
     plume::RenderColor clearColor{ 0.1f, 0.12f, 0.15f, 1.0f };
     renderCtx.commandList->clearColor(0, clearColor);
 
-    MainCBuffer* mainCbufferData = (MainCBuffer*)renderCtx.mainCBuffer->map();
-    mainCbufferData->view = camera->viewMatrix();
-    mainCbufferData->projection = camera->projMatrix();
-    renderCtx.mainCBuffer->unmap();
-
-    for (auto* model : models)
-        model->render();
-
-    ImGui_ImplSDL3_NewFrame();
-    ImGui::NewFrame();
-
-    ImGuiViewport* imguiViewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(imguiViewport->Pos);
-    ImGui::SetNextWindowSize(imguiViewport->Size);
-    ImGui::SetNextWindowViewport(imguiViewport->ID);
-
-    ImGuiWindowFlags windowFlags = 
-        ImGuiWindowFlags_NoDocking  | ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove     | ImGuiWindowFlags_NoBringToFrontOnFocus |
-        ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
-    ImGui::Begin("DockSpace Window", nullptr, windowFlags);
-    ImGui::PopStyleVar(3);
-
-    ImGui::DockSpace(ImGui::GetID("DockSpace"), { 0, 0 }, ImGuiDockNodeFlags_PassthruCentralNode);
-
-    ImGuizmo::BeginFrame();
-    ImGuizmo::SetRect(0, 0, (float)width, (float)height);
-}
-
-void Graphics::renderEnd()
-{
-    ImGui::End();
-    ImGui::Render();
     ImGui_ImplPlume_RenderDrawData(ImGui::GetDrawData(), renderCtx.commandList.get());
 
     renderCtx.commandList->barriers(plume::RenderBarrierStage::NONE, plume::RenderTextureBarrier{ swapChainTexture, plume::RenderTextureLayout::PRESENT });
@@ -211,6 +319,9 @@ void Graphics::shutdown()
     renderCtx.releaseSemaphores.clear();
 
     renderCtx.framebuffers.clear();
+    renderCtx.screenDs.reset();
+    renderCtx.screenFb.reset();
+    renderCtx.screenTex.reset();
     renderCtx.mainCBuffer.reset();
 
     renderCtx.swapChain.reset();

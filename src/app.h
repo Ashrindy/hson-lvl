@@ -37,6 +37,13 @@ namespace ulvl {
 			panels.push_back(new T{});
 		}
 		template<typename T>
+		T* getPanel() {
+			for (auto* panel : panels)
+				if (T* tPanel = dynamic_cast<T*>(panel))
+					return tPanel;
+			return nullptr;
+		}
+		template<typename T>
 		void addService() {
 			services.push_back(new T{});
 			services[services.size() - 1]->AddCallback();
@@ -54,7 +61,7 @@ namespace ulvl {
 		~Application();
 
 	private:
-		void render();
 		void update();
+		void render();
 	};
 }

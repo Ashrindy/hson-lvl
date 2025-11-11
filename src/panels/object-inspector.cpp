@@ -100,6 +100,7 @@ bool ObjectInspector::ParamEditor(const char* name, hl::hson::parameter& param, 
 				if (payload && *(app::ObjectService::Object**)payload->Data) {
 					auto* dropped = *(app::ObjectService::Object**)payload->Data;
 					param.value_string() = dropped->guid.as_string();
+					changed |= true;
 				}
 
 				ImGui::EndDragDropTarget();
@@ -115,8 +116,10 @@ bool ObjectInspector::ParamEditor(const char* name, hl::hson::parameter& param, 
 				for (auto value : enumDef.values) {
 					bool selected{ strcmp(value.first, currentValue.c_str()) == 0 };
 
-					if (ImGui::Selectable(value.first, &selected))
+					if (ImGui::Selectable(value.first, &selected)) {
 						currentValue = value.first;
+						changed |= true;
+					}
 				}
 
 				ImGui::EndCombo();

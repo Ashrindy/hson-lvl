@@ -134,6 +134,7 @@ void Model::setWorldMatrix(const glm::mat4& mat) {
 }
 
 void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount, void* texture) {
+    auto* gfx = Graphics::instance;
 	int indexOffset = this->indices.size();
 	int vertexOffset = vertexCount;
 	meshes.emplace_back(indexOffset, icount, texture);
@@ -145,7 +146,24 @@ void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices
     }
     this->vertices = newVerts;
     memcpy(&newVerts[vertexCount * vertexStride], vertices, vcount * vertexStride);
+    
     vertexCount += vcount;
+
+    Graphics::Buffer existingVb{};
+    for (auto& vb : gfx->existingVBuffers) {
+        if (vb.size == vertexCount * vertexStride && memcmp(vb.buffer, this->vertices, vb.size) == 0) {
+            existingVb = vb;
+            break;
+        }
+    }
+
+    if (existingVb.buffer != nullptr) {
+        delete this->vertices;
+        this->vertices = existingVb.buffer;
+    }
+    else
+        gfx->existingVBuffers.emplace_back(this->vertices, vertexCount * vertexStride);
+
 
 	this->indices.insert(this->indices.end(), indices, indices + icount);
 

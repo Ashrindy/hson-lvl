@@ -33,23 +33,44 @@ namespace ulvl::gfx {
 			std::unique_ptr<plume::RenderCommandFence> commandFence;
 			std::vector<std::unique_ptr<plume::RenderFramebuffer>> framebuffers;
 			std::unique_ptr<plume::RenderBuffer> mainCBuffer;
+
+			std::unique_ptr<plume::RenderTexture> screenTex;
+			std::unique_ptr<plume::RenderFramebuffer> screenFb;
+			std::unique_ptr<plume::RenderDescriptorSet> screenDs;
+		};
+
+		struct Buffer {
+			void* buffer{ nullptr };
+			size_t size{ 0 };
+
+			Buffer() {};
+			Buffer(void* buffer, size_t size) : buffer{ buffer }, size{ size } {}
 		};
 
 		void createFramebuffers();
+		void createScreenFramebuffers();
 		void resize(unsigned int width, unsigned int height);
+		void resizeScreen(unsigned int width, unsigned int height);
+		void reposScreen(unsigned int x, unsigned int y);
 		void initializeRenderResources();
+		void setUnsaved(bool unsaved);
 
 		SDL_Window* window;
 		unsigned int width{ 1280 }, height{ 720 };
+		unsigned int screenWidth{ 1280 }, screenHeight{ 720 };
+		unsigned int screenPosX{ 0 }, screenPosY{ 0 };
 		float deltaTime{ 0 };
 		Camera* camera;
 		const char* name{ "hson-lvl" };
 		std::vector<Model*> models;
 		RenderContext renderCtx;
+		std::vector<Buffer> existingVBuffers;
 
 		bool init();
 		void renderBegin();
 		void renderEnd();
+		void renderUIBegin();
+		void renderUIEnd();
 		void shutdown();
 		~Graphics();
 	};

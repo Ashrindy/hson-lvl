@@ -1,41 +1,60 @@
 #include "object-service.h"
 #include "template-manager.h"
+#include "project-manager.h"
 #include "../app.h"
 #include "../graphics/graphics.h"
+#include "../math/mat.h"
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include "object-selection-manager.h"
 
 using namespace ulvl::app;
 
-ObjectService::Object::Object(const hl::guid& guid, hl::hson::object* object) : guid{ guid }, hson { object } {
+ObjectService::Object::Object(const hl::guid& guid, hl::hson::object* object, hl::hson::project* proj) : guid{ guid }, hson{ object }, owner{ proj } {
 	model = new gfx::Model{};
 
     updateModel();
-
-    model->setWorldMatrix(getWorldMatrix());
+    updateModelMat();
 
     gfx::Graphics::instance->models.push_back(model);
 }
 
+ObjectService::Object::~Object() {
+    auto* app = Application::instance;
+    auto* objService = app->getService<ObjectService>();
+
+    for (auto* child : children)
+        objService->removeObject(child);
+
+    auto& models = gfx::Graphics::instance->models;
+    models.erase(std::remove(models.begin(), models.end(), model));
+
+    delete model;
+}
+
 void ObjectService::Object::setPosition(const glm::vec3& pos) {
-    hson->position = { pos.x, pos.y, pos.z };
+    hson->position = { -pos.x, pos.y, pos.z };
 
     model->setPosition(pos);
+
+    for (auto* child : children) child->updateModelMat();
 }
 
 void ObjectService::Object::setLocalPosition(const glm::vec3& pos) {
-    hson->position = { pos.x, pos.y, pos.z };
+    hson->position = { -pos.x, pos.y, pos.z };
 
     if (hasParent()) {
         model->setPosition(getWorldMatrix()[3]);
     }
     else
         model->setPosition(pos);
+
+    for (auto* child : children) child->updateModelMat();
 }
 
 void ObjectService::Object::setLocalRotation(const glm::vec3& rot) {
     auto quat = glm::quat{ rot };
-    hson->rotation = { quat.x, quat.y, quat.z, quat.w };
+    hson->rotation = { -quat.x, -quat.y, -quat.z, quat.w };
 
     if (hasParent()) {
         auto worldMatrix = getWorldMatrix();
@@ -43,27 +62,51 @@ void ObjectService::Object::setLocalRotation(const glm::vec3& rot) {
     }
     else
         model->setRotation(rot);
+
+    for (auto* child : children) child->updateModelMat();
+}
+
+void ObjectService::Object::setLocalQuaternion(const glm::quat& rot) {
+    hson->rotation = { -rot.x, -rot.y, -rot.z, rot.w };
+
+    if (hasParent()) {
+        auto worldMatrix = getWorldMatrix();
+        model->setRotation(glm::quat_cast(worldMatrix));
+    }
+    else
+        model->setRotation(rot);
+
+    for (auto* child : children) child->updateModelMat();
 }
 
 void ObjectService::Object::setRotation(const glm::vec3& rot) {
     auto quat = glm::quat{ rot };
-    hson->rotation = { quat.x, quat.y, quat.z, quat.w };
+    hson->rotation = { -quat.x, -quat.y, -quat.z, quat.w };
 
     model->setRotation(rot);
+
+    for (auto* child : children) child->updateModelMat();
+}
+
+void ObjectService::Object::setQuaternion(const glm::quat& rot) {
+    hson->rotation = { -rot.x, -rot.y, -rot.z, rot.w };
+    model->setRotation(rot);
+
+    for (auto* child : children) child->updateModelMat();
 }
 
 glm::vec3 ObjectService::Object::getLocalPosition() const {
     if (!hson->position.has_value()) return glm::vec3{ 0, 0, 0 };
 
     auto& hsonPos = hson->position.value();
-    return glm::vec3{ hsonPos.x, hsonPos.y, hsonPos.z };
+    return glm::vec3{ -hsonPos.x, hsonPos.y, hsonPos.z };
 }
 
 glm::vec3 ObjectService::Object::getLocalRotation() const {
     if (!hson->rotation.has_value()) return glm::vec3{ 0, 0, 0 };
 
     auto& hsonRot = hson->rotation.value();
-    auto quat = glm::quat{ hsonRot.w, hsonRot.x, hsonRot.y, hsonRot.z };
+    auto quat = glm::quat{ hsonRot.w, -hsonRot.x, -hsonRot.y, -hsonRot.z };
     return glm::eulerAngles(quat);
 }
 
@@ -71,7 +114,7 @@ glm::quat ObjectService::Object::getLocalQuaternion() const {
     if (!hson->rotation.has_value()) return glm::quat{ 1, 0, 0, 0 };
 
     auto& hsonRot = hson->rotation.value();
-    return glm::quat{ hsonRot.w, hsonRot.x, hsonRot.y, hsonRot.z };
+    return glm::quat{ hsonRot.w, -hsonRot.x, -hsonRot.y, -hsonRot.z };
 }
 
 glm::vec3 ObjectService::Object::getPosition() const {
@@ -90,24 +133,24 @@ glm::quat ObjectService::Object::getQuaternion() const {
 
 glm::mat4 ObjectService::Object::getWorldMatrix() const {
     if (hasParent())
-        return getLocalMatrix() * getParent()->getWorldMatrix();
+        return getParent()->getWorldMatrix() * getLocalMatrix();
     else
         return getLocalMatrix();
 }
 
 glm::mat4 ObjectService::Object::getLocalMatrix() const {
-    return glm::translate(glm::mat4(1), getLocalPosition()) * glm::toMat4(getLocalQuaternion());
+    return glm::translate(glm::mat4{ 1 }, getLocalPosition()) * glm::toMat4(getLocalQuaternion());
 }
 
 ObjectService::Object* ObjectService::Object::getParent() const {
-    if (hasParent())
+    if (hson->parentID.has_value())
         return Application::instance->getService<ObjectService>()->getObject(hson->parentID.value());
 
     return nullptr;
 }
 
 bool ObjectService::Object::hasParent() const {
-    return hson->parentID.has_value();
+    return hson->parentID.has_value() && getParent();
 }
 
 bool ObjectService::Object::hasChildren() const {
@@ -125,15 +168,15 @@ void ObjectService::Object::updateChildren() {
 }
 
 void ObjectService::Object::updateModel() {
-    model->clearMeshes();
 
     ModelData modelData = Application::instance->getService<TemplateManager>()->currentTemplate->getModelData(this);
     if (modelData.vertices != nullptr) {
+        model->clearMeshes();
         model->addMesh(modelData.vertices, modelData.vertexCount, modelData.indices, modelData.indexCount, nullptr);
         delete modelData.vertices;
         delete modelData.indices;
     }
-    else {
+    else if (model->indices.size() == 0) {
         gfx::BaseVertex vertices[]{
             {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}},
             {{ 0.5f, -0.5f, 0.0f}, {1.0f, 0.0f}},
@@ -150,10 +193,59 @@ void ObjectService::Object::updateModel() {
     }
 }
 
-ObjectService::Object* ObjectService::addObject(const hl::guid& guid, hl::hson::object* hson) {
-    auto* object = new Object{ guid, hson };
+void ObjectService::Object::updateModelMat() {
+    model->setWorldMatrix(getWorldMatrix());
+    for (auto* child : children) child->updateModelMat();
+}
+
+void ObjectService::Object::updateHsonPtr() {
+    hson = &owner->objects[guid];
+}
+
+ObjectService::Object* ObjectService::addObject(const hl::guid& guid, hl::hson::object* hson, hl::hson::project* proj) {
+    auto* object = new Object{ guid, hson, proj };
     objects.push_back(object);
     return object;
+}
+
+void ObjectService::removeObject(Object* object) {
+    auto* app = Application::instance;
+    
+    auto* objectSelectMgr = app->getService<ObjectSelectionManager>();
+    if (objectSelectMgr->selected == object)
+        objectSelectMgr->deselect();
+
+    if (auto* parent = object->getParent()) {
+        object->hson->parentID = hl::guid{ nullptr };
+        parent->updateChildren();
+    }
+
+    if (object->owner) {
+        hl::ordered_map<hl::guid, hl::hson::object>& objs{ object->owner->objects };
+        for (auto it = objs.begin(); it != objs.end(); ++it) {
+            if (it->first == object->guid) {
+                //objs.erase(it);
+                break;
+            }
+        }
+
+        auto* projMgr = app->getService<ProjectManager>();
+
+        if (auto* layer = projMgr->getLayer(object->owner))
+            layer->objects.erase(std::remove(layer->objects.begin(), layer->objects.end(), object));
+    }
+
+    objects.erase(std::remove(objects.begin(), objects.end(), object));
+
+
+    for (auto* object : objects)
+        object->updateHsonPtr();
+
+    delete object;
+}
+
+void ObjectService::removeObject(const hl::guid& guid) {
+    removeObject(getObject(guid));
 }
 
 ObjectService::Object* ObjectService::getObject(const hl::guid& guid) {

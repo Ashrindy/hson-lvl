@@ -13,8 +13,12 @@ namespace ulvl::app {
 		ObjectService::Object* selected{ nullptr };
 
 		virtual void AddCallback() override;
+
 		void select(ObjectService::Object* object);
 		void deselect();
-		virtual void Render() override;
+		void renderGizmo();
+		void save();
+
+		virtual void EventCallback(SDL_Event e) override;
 	};
 }

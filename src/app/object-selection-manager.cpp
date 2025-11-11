@@ -5,16 +5,28 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <ImGuizmo.h>
+#include <glm/gtc/type_ptr.hpp>
+#include "project-manager.h"
 
 using namespace ulvl::app;
 
 void ObjectSelectionManager::updateMatrix() {
-	objectMatrix = glm::translate(glm::mat4(1), selected->getPosition()) * glm::toMat4(selected->getQuaternion());
+	objectMatrix = selected->getWorldMatrix();
 }
 
 void ObjectSelectionManager::updateObject() {
-	selected->setPosition({ objectMatrix[3] });
-	selected->setRotation(glm::eulerAngles(glm::quat_cast(objectMatrix)));
+	Application::instance->getService<app::ProjectManager>()->setUnsaved(true);
+
+	if (selected->hasParent()) {
+		glm::mat4 parentWorld = selected->getParent()->getWorldMatrix();
+		glm::mat4 newLocal = glm::inverse(parentWorld) * objectMatrix;
+		selected->setLocalPosition({ newLocal[3] });
+		selected->setLocalQuaternion({ glm::quat_cast(newLocal) });
+	}
+	else {
+		selected->setLocalPosition({ objectMatrix[3] });
+		selected->setLocalQuaternion({ glm::quat_cast(objectMatrix) });
+	}
 }
 
 void ObjectSelectionManager::AddCallback() {
@@ -30,7 +42,7 @@ void ObjectSelectionManager::deselect() {
 	selected = nullptr;
 }
 
-void ObjectSelectionManager::Render() {
+void ObjectSelectionManager::renderGizmo() {
 	if (!selected) return;
 	auto* graphics = gfx::Graphics::instance;
 	auto* camera = graphics->camera;
@@ -41,6 +53,22 @@ void ObjectSelectionManager::Render() {
 	projMatrix[1][1] *= -1.0f;
 
 	updateMatrix();
-	if (ImGuizmo::Manipulate((const float*)&viewMatrix, (const float*)&projMatrix, ImGuizmo::OPERATION::UNIVERSAL, ImGuizmo::MODE::WORLD, (float*)&objectMatrix))
+	if (ImGuizmo::Manipulate((const float*)&viewMatrix, (const float*)&projMatrix, ImGuizmo::OPERATION::TRANSLATE | ImGuizmo::OPERATION::ROTATE, ImGuizmo::MODE::WORLD, (float*)&objectMatrix))
 		updateObject();
+}
+
+void ObjectSelectionManager::save() {
+	auto* app = Application::instance;
+	auto* projectMgr = app->getService<app::ProjectManager>();
+	auto* objSelectMgr = app->getService<app::ObjectSelectionManager>();
+
+	if (auto* selected = objSelectMgr->selected)
+		if (auto* layer = projectMgr->getLayer(selected->owner))
+			layer->save();
+}
+
+void ObjectSelectionManager::EventCallback(SDL_Event e) {
+	const bool* keys = SDL_GetKeyboardState(NULL);
+
+	if ((keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL]) && keys[SDL_SCANCODE_S]) save();
 }

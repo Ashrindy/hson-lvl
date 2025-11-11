@@ -11,12 +11,16 @@ namespace ulvl::app {
 			hl::hson::object* hson;
 			gfx::Model* model;
 			std::vector<Object*> children;
+			hl::hson::project* owner;
 
-			Object(const hl::guid& guid, hl::hson::object* hson);
+			Object(const hl::guid& guid, hl::hson::object* hson, hl::hson::project* proj);
+			~Object();
 			void setPosition(const glm::vec3& pos);
 			void setRotation(const glm::vec3& rot);
+			void setQuaternion(const glm::quat& rot);
 			void setLocalPosition(const glm::vec3& pos);
 			void setLocalRotation(const glm::vec3& rot);
+			void setLocalQuaternion(const glm::quat& rot);
 			glm::vec3 getLocalPosition() const;
 			glm::vec3 getLocalRotation() const;
 			glm::quat getLocalQuaternion() const;
@@ -36,11 +40,15 @@ namespace ulvl::app {
 				return std::string{ hson->type + " - " + guid.as_string() };
 			}
 			void updateModel();
+			void updateModelMat();
+			void updateHsonPtr();
 		};
 
 		std::vector<Object*> objects;
 
-		Object* addObject(const hl::guid& guid, hl::hson::object* hson);
+		Object* addObject(const hl::guid& guid, hl::hson::object* hson, hl::hson::project* proj);
+		void removeObject(Object* object);
+		void removeObject(const hl::guid& guid);
 		Object* getObject(const hl::guid& guid);
 	};
 }

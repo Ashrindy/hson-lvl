@@ -2,6 +2,7 @@
 #include "panels/object-list.h"
 #include "panels/object-inspector.h"
 #include "panels/object-library.h"
+#include "panels/viewport.h"
 #include "app/camera-service.h"
 #include "app/object-service.h"
 #include "app/project-manager.h"
@@ -22,6 +23,7 @@ void Application::init() {
     addPanel<ObjectList>();
     addPanel<ObjectInspector>();
     addPanel<ObjectLibrary>();
+    addPanel<Viewport>();
 
     addService<app::CameraService>();
     addService<app::ObjectService>();
@@ -30,9 +32,19 @@ void Application::init() {
     addService<app::TemplateManager>();
 
     getService<app::TemplateManager>()->loadTemplate("rangers");
-    getService<app::ProjectManager>()->loadProject("E:\\Steam\\steamapps\\common\\SonicFrontiers\\image\\x64\\raw\\gedit\\w6d01_gedit\\w6d01_obj_area01.hson");
-    /*getService<app::ProjectManager>()->loadProject("D:\\gens-hson\\bin\\Debug\\net8.0\\test.hson");
-    getService<app::TemplateManager>()->loadTemplate("gens");*/
+    getService<app::ProjectManager>()->loadProject("E:\\Steam\\steamapps\\common\\SonicFrontiers\\image\\x64\\raw\\gedit\\w6d01_gedit");
+
+    /*getService<app::TemplateManager>()->loadTemplate("gens");
+    getService<app::ProjectManager>()->addProject("greenhill");
+    getService<app::ProjectManager>()->projects[0]->loadLayer("D:\\gens-hson\\bin\\Debug\\net8.0\\test.hson");*/
+
+    /*getService<app::TemplateManager>()->loadTemplate("synergy");
+    getService<app::ProjectManager>()->addProject("boom");
+    getService<app::ProjectManager>()->projects[0]->loadLayer("C:\\Users\\honzu\\Desktop\\S01_Design.hson");*/
+
+    /*getService<app::TemplateManager>()->loadTemplate("heroes");
+    getService<app::ProjectManager>()->addProject("heroes");
+    getService<app::ProjectManager>()->projects[0]->loadLayer("C:\\Users\\honzu\\Desktop\\s01_P2.hson");*/
 }
 
 void Application::loop()
@@ -41,10 +53,13 @@ void Application::loop()
         frameTimer.update();
         update();
         graphics->renderBegin();
-        render();
         for (auto* listener : appListeners)
             listener->Render();
         graphics->renderEnd();
+        graphics->renderUIBegin();
+        render();
+        graphics->renderUIEnd();
+        getPanel<Viewport>()->AfterRender();
     }
 }
 
