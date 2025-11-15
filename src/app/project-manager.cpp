@@ -4,7 +4,7 @@
 using namespace ulvl::app;
 
 ProjectManager::Project::Project(const std::filesystem::path& folderPath) : folderPath{ folderPath } {
-	for (const auto& file : std::filesystem::directory_iterator(folderPath))
+	for (const auto& file : std::filesystem::directory_iterator{ folderPath })
 		if (file.path().extension() == ".hson")
 			loadLayer(file);
 }
@@ -26,6 +26,30 @@ ProjectManager::Layer* ProjectManager::Project::getLayer(const hl::hson::project
 void ProjectManager::Project::save() {
 	for (auto* layer : layers)
 		layer->save();
+}
+
+void ProjectManager::Project::closeLayer(Layer* layer, bool removeFromVector) {
+	if (removeFromVector)
+		layers.erase(std::remove(layers.begin(), layers.end(), layer));
+
+	auto* objServ = Application::instance->getService<ObjectService>();
+	for (auto it = layer->objects.begin(); it != layer->objects.end(); it++) {
+		auto* obj = (*it);
+		if ((*it)->hasChildren())
+			std::advance(it, (*it)->children.size());
+		objServ->removeObject(obj, false);
+	}
+	layer->objects.clear();
+	layer->hson->clear();
+	delete layer->hson;
+	delete layer;
+}
+
+void ProjectManager::Project::closeAll() {
+	for (auto* layer : layers)
+		closeLayer(layer, false);
+
+	layers.clear();
 }
 
 void ProjectManager::AddCallback() {
@@ -76,6 +100,25 @@ void ProjectManager::saveAll() {
 		project->save();
 	for (auto* layer : layers)
 		layer->save();
+}
+
+void ProjectManager::closeProject(Project* proj) {
+	projects.erase(std::remove(projects.begin(), projects.end(), proj));
+
+	proj->closeAll();
+
+	delete proj;
+}
+
+void ProjectManager::closeLayer(Layer* layer) {
+	layers.erase(std::remove(layers.begin(), layers.end(), layer));
+
+	auto* objServ = Application::instance->getService<ObjectService>();
+	for (auto* obj : layer->objects)
+		objServ->removeObject(obj);
+	layer->objects.clear();
+	delete layer->hson;
+	delete layer;
 }
 
 void ProjectManager::EventCallback(SDL_Event e) {

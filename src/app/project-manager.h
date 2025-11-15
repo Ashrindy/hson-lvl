@@ -27,6 +27,8 @@ namespace ulvl::app {
 			void loadLayer(const std::filesystem::path& hsonPath);
 			Layer* getLayer(const hl::hson::project* project);
 			void save();
+			void closeLayer(Layer* layer, bool removeFromVector = true);
+			void closeAll();
 		};
 
 		std::vector<Project*> projects;
@@ -44,6 +46,8 @@ namespace ulvl::app {
 		void newProj();
 		void newLayer();
 		void saveAll();
+		void closeProject(Project* proj);
+		void closeLayer(Layer* layer);
 
 		virtual void EventCallback(SDL_Event e) override;
 	};

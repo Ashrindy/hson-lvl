@@ -88,7 +88,7 @@ void RenderObject(app::ObjectService::Object* object) {
 	ImGui::PopID();
 }
 
-void RenderLayer(app::ProjectManager::Layer * layer) {
+void RenderLayer(app::ProjectManager::Layer* layer) {
 	ImGui::PushID(layer);
 
 	bool isOpen = ImGui::TreeNode(layer->hsonPath.stem().string().c_str());
@@ -96,6 +96,26 @@ void RenderLayer(app::ProjectManager::Layer * layer) {
 	if (ImGui::BeginPopupContextItem()) {
 		if (ImGui::MenuItem("Save", "Ctrl+S"))
 			layer->save();
+		if (ImGui::MenuItem("Close"))
+		{
+			auto* projMgr = Application::instance->getService<app::ProjectManager>();
+			bool inProj{ true };
+			for (auto* lay : projMgr->layers)
+				if (lay == layer) {
+					projMgr->closeLayer(layer);
+					inProj = false;
+					break;
+				}
+
+			if (inProj) {
+				for (auto* proj : projMgr->projects)
+					for (auto* lay : proj->layers)
+						if (lay == layer) {
+							proj->closeLayer(layer);
+							break;
+						}
+			}
+		}
 
 		ImGui::EndPopup();
 	}
@@ -121,6 +141,8 @@ void RenderProject(app::ProjectManager::Project* project) {
 	if (ImGui::BeginPopupContextItem()) {
 		if (ImGui::MenuItem("Save"))
 			project->save();
+		if (ImGui::MenuItem("Close"))
+			Application::instance->getService<app::ProjectManager>()->closeProject(project);
 
 		ImGui::EndPopup();
 	}

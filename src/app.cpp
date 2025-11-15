@@ -8,6 +8,8 @@
 #include "app/project-manager.h"
 #include "app/object-selection-manager.h"
 #include "app/template-manager.h"
+#include "app/file-dialog-service.h"
+#include "app/cleaner-service.h"
 #include <imgui_impl_sdl3.h>
 
 using namespace ulvl;
@@ -30,6 +32,8 @@ void Application::init() {
     addService<app::ProjectManager>();
     addService<app::ObjectSelectionManager>();
     addService<app::TemplateManager>();
+    addService<app::FileDialogService>();
+    addService<app::CleanerService>();
 
     getService<app::TemplateManager>()->loadTemplate("rangers");
     getService<app::ProjectManager>()->loadProject("E:\\Steam\\steamapps\\common\\SonicFrontiers\\image\\x64\\raw\\gedit\\w6d01_gedit");
@@ -60,6 +64,7 @@ void Application::loop()
         render();
         graphics->renderUIEnd();
         getPanel<Viewport>()->AfterRender();
+        getService<app::CleanerService>()->deleteAll();
     }
 }
 

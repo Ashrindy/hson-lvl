@@ -87,8 +87,8 @@ void CameraService::EventCallback(SDL_Event e) {
         case SDL_EVENT_MOUSE_WHEEL: {
             if (!viewportHovered || gizmoActive) break;
 
-            this->cameraSpeed += (float)e.wheel.y;
-            this->cameraSpeed = std::clamp(this->cameraSpeed, 1.0f, 60.0f);
+            this->cameraSpeed += (float)e.wheel.y*3;
+            this->cameraSpeed = std::clamp(this->cameraSpeed, 1.0f, 300.0f);
             break;
         }
     }

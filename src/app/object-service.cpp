@@ -7,6 +7,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include "object-selection-manager.h"
+#include "cleaner-service.h"
 
 using namespace ulvl::app;
 
@@ -26,10 +27,7 @@ ObjectService::Object::~Object() {
     for (auto* child : children)
         objService->removeObject(child);
 
-    auto& models = gfx::Graphics::instance->models;
-    models.erase(std::remove(models.begin(), models.end(), model));
-
-    delete model;
+    Application::instance->getService<CleanerService>()->deleteModel(model);
 }
 
 void ObjectService::Object::setPosition(const glm::vec3& pos) {
@@ -208,7 +206,7 @@ ObjectService::Object* ObjectService::addObject(const hl::guid& guid, hl::hson::
     return object;
 }
 
-void ObjectService::removeObject(Object* object) {
+void ObjectService::removeObject(Object* object, bool removeFromLayer) {
     auto* app = Application::instance;
     
     auto* objectSelectMgr = app->getService<ObjectSelectionManager>();
@@ -229,14 +227,15 @@ void ObjectService::removeObject(Object* object) {
             }
         }
 
-        auto* projMgr = app->getService<ProjectManager>();
+        if (removeFromLayer) {
+            auto* projMgr = app->getService<ProjectManager>();
 
-        if (auto* layer = projMgr->getLayer(object->owner))
-            layer->objects.erase(std::remove(layer->objects.begin(), layer->objects.end(), object));
+            if (auto* layer = projMgr->getLayer(object->owner))
+                layer->objects.erase(std::remove(layer->objects.begin(), layer->objects.end(), object), layer->objects.end());
+        }
     }
 
     objects.erase(std::remove(objects.begin(), objects.end(), object));
-
 
     for (auto* object : objects)
         object->updateHsonPtr();
@@ -244,8 +243,8 @@ void ObjectService::removeObject(Object* object) {
     delete object;
 }
 
-void ObjectService::removeObject(const hl::guid& guid) {
-    removeObject(getObject(guid));
+void ObjectService::removeObject(const hl::guid& guid, bool removeFromLayer) {
+    removeObject(getObject(guid), removeFromLayer);
 }
 
 ObjectService::Object* ObjectService::getObject(const hl::guid& guid) {

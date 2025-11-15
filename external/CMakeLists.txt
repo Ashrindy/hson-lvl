@@ -15,5 +15,6 @@ set(SDL_VULKAN_ENABLED ON CACHE BOOL "")
 add_subdirectory("${HE_LEVEL_EXTERNAL_DIR}/plume")
 add_subdirectory("${HE_LEVEL_EXTERNAL_DIR}/SDL")
 add_subdirectory("${HE_LEVEL_EXTERNAL_DIR}/imgui-impl-plume")
+add_subdirectory("${HE_LEVEL_EXTERNAL_DIR}/nativefiledialog-extended")
 
-target_link_libraries(${HE_LEVEL_NAME} PRIVATE imgui imguizmo glm plume Vulkan::Vulkan SDL3::SDL3 HedgeLib imgui-impl-plume squirrel_static sqstdlib_static)
+target_link_libraries(${HE_LEVEL_NAME} PRIVATE imgui imguizmo glm plume Vulkan::Vulkan SDL3::SDL3 HedgeLib imgui-impl-plume squirrel_static sqstdlib_static nfd)

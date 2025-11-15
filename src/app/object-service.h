@@ -47,8 +47,8 @@ namespace ulvl::app {
 		std::vector<Object*> objects;
 
 		Object* addObject(const hl::guid& guid, hl::hson::object* hson, hl::hson::project* proj);
-		void removeObject(Object* object);
-		void removeObject(const hl::guid& guid);
+		void removeObject(Object* object, bool removeFromLayer = true);
+		void removeObject(const hl::guid& guid, bool removeFromLayer = true);
 		Object* getObject(const hl::guid& guid);
 	};
 }

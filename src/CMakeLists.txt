@@ -13,7 +13,7 @@ add_executable (${HE_LEVEL_NAME}
 	"graphics/model.h" 
 	"graphics/model.cpp"
 	"graphics/fonts/Inter.h"
-	"graphics/fonts/NotoSansJP.h"
+	#"graphics/fonts/NotoSansJP.h"
 	"graphics/shaders/vs.h"
 	"graphics/shaders/ps.h"
 	"graphics/shaders/ps_color.h" 
@@ -38,6 +38,11 @@ add_executable (${HE_LEVEL_NAME}
 	"app/template-manager.cpp"
 	"app/debug-visual-service.h"
 	"app/debug-visual-service.cpp"
+	"app/file-dialog-service.h"
+	"app/file-dialog-service.cpp"
+	"app/cleaner-service.h"
+	"app/cleaner-service.cpp"
+
 	"app/template/template.h"
 	"app/template/template.cpp"
 	"app/template/squirrelwrap.h"
@@ -50,6 +55,9 @@ add_executable (${HE_LEVEL_NAME}
     "panels/object-inspector.h"
 	"panels/object-inspector.cpp" 
 	"panels/object-library.h"
+	"panels/viewport.h" 
+	"panels/viewport.cpp"
+	"panels/object-list.cpp"
 
 	"ui/toolbar.h"
 	"ui/panel.h" 
@@ -61,9 +69,7 @@ add_executable (${HE_LEVEL_NAME}
 
 	"utilities/hson.h" 
 	"utilities/hson.cpp" 
-	"panels/viewport.h" 
-	"panels/viewport.cpp"
- "panels/object-list.cpp")
+)
 
 target_precompile_headers(${HE_LEVEL_NAME} PRIVATE "pch.h")
 

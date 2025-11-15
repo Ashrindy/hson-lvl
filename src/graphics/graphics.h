@@ -39,14 +39,6 @@ namespace ulvl::gfx {
 			std::unique_ptr<plume::RenderDescriptorSet> screenDs;
 		};
 
-		struct Buffer {
-			void* buffer{ nullptr };
-			size_t size{ 0 };
-
-			Buffer() {};
-			Buffer(void* buffer, size_t size) : buffer{ buffer }, size{ size } {}
-		};
-
 		void createFramebuffers();
 		void createScreenFramebuffers();
 		void resize(unsigned int width, unsigned int height);
@@ -64,7 +56,6 @@ namespace ulvl::gfx {
 		const char* name{ "hson-lvl" };
 		std::vector<Model*> models;
 		RenderContext renderCtx;
-		std::vector<Buffer> existingVBuffers;
 
 		bool init();
 		void renderBegin();

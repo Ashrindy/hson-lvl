@@ -20,7 +20,7 @@ void Model::updateAabb() {
     for (size_t idx = 0; idx < vertexCount; idx++) {
         auto& position = getVertexValue<glm::vec3>(idx, posOffset);
         aabb.min = glm::min(aabb.min, position);
-        aabb.max = glm::min(aabb.max, position);
+        aabb.max = glm::max(aabb.max, position);
     }
 }
 
@@ -100,6 +100,11 @@ void Model::init() {
 }
 
 void Model::shutdown() {
+    delete[] vertices;
+    vertices = nullptr;
+    vertexLayout.clear();
+    meshes.clear();
+    indices.clear();
     pipeline.reset();
     descriptor.reset();
     pipelineLayout.reset();
@@ -142,28 +147,12 @@ void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices
     char* newVerts = new char[(vertexCount + vcount) * vertexStride];
     if (this->vertices) {
         memcpy(newVerts, this->vertices, vertexCount * vertexStride);
-        delete this->vertices;
+        delete[] this->vertices;
     }
     this->vertices = newVerts;
     memcpy(&newVerts[vertexCount * vertexStride], vertices, vcount * vertexStride);
     
     vertexCount += vcount;
-
-    Graphics::Buffer existingVb{};
-    for (auto& vb : gfx->existingVBuffers) {
-        if (vb.size == vertexCount * vertexStride && memcmp(vb.buffer, this->vertices, vb.size) == 0) {
-            existingVb = vb;
-            break;
-        }
-    }
-
-    if (existingVb.buffer != nullptr) {
-        delete this->vertices;
-        this->vertices = existingVb.buffer;
-    }
-    else
-        gfx->existingVBuffers.emplace_back(this->vertices, vertexCount * vertexStride);
-
 
 	this->indices.insert(this->indices.end(), indices, indices + icount);
 
@@ -197,7 +186,8 @@ void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices
 void Model::clearMeshes() {
     meshes.clear();
     vertexCount = 0;
-    delete vertices;
+    delete[] vertices;
+    vertices = nullptr;
     indices.clear();
 }
 
@@ -210,7 +200,7 @@ size_t Model::getVertexLayoutOffset(const char* semanticName) const {
 }
 
 void Model::render() {
-	auto* graphics = Graphics::instance;
+    auto* graphics = Graphics::instance;
     auto& ctx = graphics->renderCtx;
 
     ctx.commandList->setGraphicsPipelineLayout(pipelineLayout.get());
