@@ -16,7 +16,7 @@ Template::Template(const char* templateName) : name{ templateName } {
 	registerTypes(squirrelWrap);
 }
 
-ModelData ulvl::app::Template::getModelData(ObjectService::Object* obj) {
+ModelData Template::getModelData(ObjectService::Object* obj) {
 	fs::path objPath = fs::path{ "templates" } / name / "src";
 	objPath /= { obj->hson->type + std::string{ ".nut" } };
 	if (!fs::exists(objPath))
@@ -24,6 +24,16 @@ ModelData ulvl::app::Template::getModelData(ObjectService::Object* obj) {
 
 	squirrelWrap.loadFile(objPath);
 	return squirrelWrap.callGetModelData(obj);
+}
+
+void Template::addDebugVisual(ObjectService::Object* obj) {
+	fs::path objPath = fs::path{ "templates" } / name / "src";
+	objPath /= { obj->hson->type + std::string{ ".nut" } };
+	if (!fs::exists(objPath))
+		return;
+
+	squirrelWrap.loadFile(objPath);
+	squirrelWrap.callAddDebugVisual(obj);
 }
 
 void Template::Tree::generateTree(hl::set_object_type_database* hsonTemplate) {
@@ -59,7 +69,7 @@ Template::TreeNode* Template::Tree::getNode(const char* name)
 	return getNode(name, tree);
 }
 
-Template::TreeNode* ulvl::app::Template::Tree::getNodeByPath(const char* path)
+Template::TreeNode* Template::Tree::getNodeByPath(const char* path)
 {
 	std::stringstream ss{ path };
 	std::string part;

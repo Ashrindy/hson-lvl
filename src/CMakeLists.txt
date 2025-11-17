@@ -10,8 +10,12 @@ add_executable (${HE_LEVEL_NAME}
 	"graphics/graphics.h"
 	"graphics/camera.h" 
 	"graphics/camera.cpp"
+	"graphics/basemodel.h"
+	"graphics/basemodel.cpp"
 	"graphics/model.h" 
 	"graphics/model.cpp"
+	"graphics/instancedmodel.h"
+	"graphics/instancedmodel.cpp"
 	"graphics/fonts/Inter.h"
 #	"graphics/fonts/NotoSansJP.h"
 	"graphics/shaders/vs.h"
@@ -72,7 +76,7 @@ add_executable (${HE_LEVEL_NAME}
 
 	"utilities/hson.h" 
 	"utilities/hson.cpp"
- )
+ "graphics/shaders/instance_vs.h" "graphics/shaders/color_ps.h")
 
 target_precompile_headers(${HE_LEVEL_NAME} PRIVATE "pch.h")
 

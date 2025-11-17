@@ -1,9 +1,14 @@
 #include "cleaner-service.h"
 #include "../graphics/graphics.h"
+#include "../app.h"
 
 using namespace ulvl::app;
 
-void CleanerService::deleteModel(gfx::Model* model) {
+void CleanerService::AddCallback() {
+	Application::instance->addListener(this);
+}
+
+void CleanerService::deleteModel(gfx::BaseModel* model) {
 	modelsForDeletion.push_back(model);
 }
 

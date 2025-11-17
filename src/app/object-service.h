@@ -1,11 +1,12 @@
 #pragma once
 #include "service.h"
+#include "applistener.h"
 #include "../graphics/model.h"
 #include <hedgelib/hh/hl_hh_gedit.h>
 #include <hedgelib/sets/hl_set_obj_type.h>
 
 namespace ulvl::app {
-	class ObjectService : public Service {
+	class ObjectService : public Service, public ApplicationListener {
 	public:
 		struct Object {
 			hl::guid guid;
@@ -42,6 +43,7 @@ namespace ulvl::app {
 			}
 			void updateModel();
 			void updateModelMat();
+			void updateDebugVisual();
 		};
 
 		std::vector<Object*> objects;

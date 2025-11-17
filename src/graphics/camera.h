@@ -13,7 +13,7 @@ public:
 	float fov{ 70 };
 	float aspectRatio{ 1280.0f / 720.0f };
 	float nearZ{ 0.1f };
-	float farZ{ 1000 };
+	float farZ{ 10000 };
 
 private:
 	glm::mat4x4 viewMat{};

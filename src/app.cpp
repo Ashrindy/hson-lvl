@@ -10,6 +10,7 @@
 #include "app/template-manager.h"
 #include "app/file-dialog-service.h"
 #include "app/cleaner-service.h"
+#include "app/debug-visual-service.h"
 #include <imgui_impl_sdl3.h>
 
 using namespace ulvl;
@@ -34,6 +35,7 @@ void Application::init() {
     addService<app::TemplateManager>();
     addService<app::FileDialogService>();
     addService<app::CleanerService>();
+    addService<app::DebugVisualService>();
 
     getService<app::TemplateManager>()->loadTemplate("rangers");
     getService<app::ProjectManager>()->loadProject("E:\\Steam\\steamapps\\common\\SonicFrontiers\\image\\x64\\raw\\gedit\\w6d01_gedit");
@@ -56,20 +58,33 @@ void Application::loop()
     while (isRunning) {
         frameTimer.update();
 
-        for (auto* panel : panelsToBeAdded)
+        for (auto* panel : panelsToBeAdded) {
+            panel->AddCallback();
             panels.push_back(panel);
+        }
         panelsToBeAdded.clear();
 
+        for (auto* listener : appListeners) listener->PreUpdate();
+
         update();
+
+        for (auto* listener : appListeners) listener->PreRender();
+
         graphics->renderBegin();
-        for (auto* listener : appListeners)
-            listener->Render();
+
+        for (auto* listener : appListeners) listener->Render();
+
         graphics->renderEnd();
+
+        for (auto* listener : appListeners) listener->PreRenderUI();
+
         graphics->renderUIBegin();
+
         render();
+
         graphics->renderUIEnd();
-        getPanel<Viewport>()->AfterRender();
-        getService<app::CleanerService>()->deleteAll();
+
+        for (auto* listener : appListeners) listener->PostRenderUI();
     }
 }
 

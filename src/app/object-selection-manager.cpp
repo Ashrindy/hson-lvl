@@ -27,6 +27,7 @@ void ObjectSelectionManager::updateObject() {
 		selected->setLocalPosition({ objectMatrix[3] });
 		selected->setLocalQuaternion({ glm::quat_cast(objectMatrix) });
 	}
+	shouldUpdateDebug = true;
 }
 
 void ObjectSelectionManager::AddCallback() {
@@ -65,6 +66,13 @@ void ObjectSelectionManager::save() {
 	if (auto* selected = objSelectMgr->selected)
 		if (auto* layer = projectMgr->getLayer(selected->owner))
 			layer->save();
+}
+
+void ObjectSelectionManager::PreRender() {
+	if (shouldUpdateDebug) {
+		shouldUpdateDebug = false;
+		selected->updateDebugVisual();
+	}
 }
 
 void ObjectSelectionManager::EventCallback(SDL_Event e) {

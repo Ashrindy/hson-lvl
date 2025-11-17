@@ -3,6 +3,7 @@
 #include "../ui/editors/basic.h"
 #include "../ui/editors/glm.h"
 #include "../app.h"
+#include "../app/applistener.h"
 #include "../app/project-manager.h"
 #include "../app/object-selection-manager.h"
 #include "../app/template-manager.h"
@@ -10,17 +11,19 @@
 #include <hedgelib/sets/hl_set_obj_type.h>
 
 namespace ulvl {
-	class ObjectInspector : public Panel {
+	class ObjectInspector : public Panel, public app::ApplicationListener {
 	public:
 		virtual Properties GetProperties() {
 			return { .name = "Object Inspector", .position = { 150, 100 }, .size = { 100, 350 }, .pivot{ 0, 0 } };
 		}
 
+		bool shouldUpdateDebug{ false };
 
 		bool ParamEditor(const char* name, hl::hson::parameter& param, hl::reflect::field_definition& fieldDef);
 		bool StructEditor(hl::radix_tree<hl::hson::parameter>& parameters, hl::radix_tree<hl::hson::parameter>& instanceParameters, hl::reflect::struct_definition& structDef);
 		bool StructEditor(hl::radix_tree<hl::hson::parameter>& parameters, hl::reflect::struct_definition& structDef);
 
+		virtual void AddCallback() override { Application::instance->addListener(this); }
 		virtual void RenderPanel() {
 			auto* app = Application::instance;
 			auto* objService = app->getService<app::ObjectService>();
@@ -65,7 +68,21 @@ namespace ulvl {
 				if (changed |= StructEditor(selected->hson->parameters, hsonTemplate->structs[hsonTemplate->operator[](selected->hson->type).structType]))
 					selected->updateModel();
 
-			if (changed) app->getService<app::ProjectManager>()->setUnsaved(true);
+			if (changed) {
+				app->getService<app::ProjectManager>()->setUnsaved(true);
+				shouldUpdateDebug = true;
+			}
+		}
+
+		virtual void PreRender() override {
+			if (shouldUpdateDebug) {
+				shouldUpdateDebug = false;
+				auto* app = Application::instance;
+				auto* selected = app->getService<app::ObjectSelectionManager>()->selected;
+				if (!selected) return;
+
+				selected->updateDebugVisual();
+			}
 		}
 	};
 }

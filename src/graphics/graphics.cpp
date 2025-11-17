@@ -53,11 +53,32 @@ void ulvl::gfx::Graphics::createScreenFramebuffers() {
         renderCtx.screenTex = renderCtx.device->createTexture(texDesc);
     }
 
+    if (!renderCtx.screenDTex.get()) {
+        plume::RenderTextureDesc dtexDesc{};
+        dtexDesc.dimension = plume::RenderTextureDimension::TEXTURE_2D;
+        dtexDesc.width = screenWidth;
+        dtexDesc.height = screenHeight;
+        dtexDesc.arraySize = 1;
+        dtexDesc.depth = 1;
+        dtexDesc.mipLevels = 1;
+        dtexDesc.format = plume::RenderFormat::D32_FLOAT;
+        dtexDesc.flags = plume::RenderTextureFlag::DEPTH_TARGET;
+        renderCtx.screenDTex = renderCtx.device->createTexture(dtexDesc);
+    }
+
+    if (!renderCtx.screenDTexView.get()) {
+        plume::RenderTextureViewDesc dtexViewDesc{ plume::RenderTextureViewDesc::Texture2D(plume::RenderFormat::D32_FLOAT) };
+        dtexViewDesc.mipLevels = 1;
+        renderCtx.screenDTexView = renderCtx.screenDTex->createTextureView(dtexViewDesc);
+    }
+
     if (!renderCtx.screenFb.get()) {
         plume::RenderFramebufferDesc fbDesc{};
         const plume::RenderTexture* attachments = renderCtx.screenTex.get();
         fbDesc.colorAttachments = &attachments;
         fbDesc.colorAttachmentsCount = 1;
+        fbDesc.depthAttachment = renderCtx.screenDTex.get();
+        fbDesc.depthAttachmentView = renderCtx.screenDTexView.get();
         renderCtx.screenFb = renderCtx.device->createFramebuffer(fbDesc);
     }
 
@@ -98,6 +119,8 @@ void Graphics::resizeScreen(unsigned int width, unsigned int height) {
 
     renderCtx.screenFb.reset();
     renderCtx.screenTex.reset();
+    renderCtx.screenDTexView.reset();
+    renderCtx.screenDTex.reset();
     createScreenFramebuffers();
     if (camera)
         camera->setAspectRatio((float)width / (float)height);
@@ -218,6 +241,8 @@ void Graphics::renderBegin()
 
     plume::RenderColor clearColor{ 0.1f, 0.12f, 0.15f, 1.0f };
     renderCtx.commandList->clearColor(0, clearColor);
+    renderCtx.commandList->clearDepth();
+    renderCtx.commandList->clearDepthStencil();
 
     MainCBuffer* mainCbufferData = (MainCBuffer*)renderCtx.mainCBuffer->map();
     mainCbufferData->view = camera->viewMatrix();
@@ -322,6 +347,8 @@ void Graphics::shutdown()
     renderCtx.screenDs.reset();
     renderCtx.screenFb.reset();
     renderCtx.screenTex.reset();
+    renderCtx.screenDTexView.reset();
+    renderCtx.screenDTex.reset();
     renderCtx.mainCBuffer.reset();
 
     renderCtx.swapChain.reset();

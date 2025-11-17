@@ -6,6 +6,7 @@
 namespace ulvl::app {
 	class ObjectSelectionManager : public Service, public ApplicationListener {
 		glm::mat4 objectMatrix{};
+		bool shouldUpdateDebug{ false };
 
 		void updateMatrix();
 		void updateObject();
@@ -19,6 +20,7 @@ namespace ulvl::app {
 		void renderGizmo();
 		void save();
 
+		virtual void PreRender() override;
 		virtual void EventCallback(SDL_Event e) override;
 	};
 }

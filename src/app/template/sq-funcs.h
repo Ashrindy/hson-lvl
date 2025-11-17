@@ -55,6 +55,12 @@ namespace ulvl::app {
 	SQFUNC(Vec3GetZ);
 	SQFUNC(Vec3SetZ);
 
+	// glm::vec4
+	SQFUNC(Vec4Ctor);
+	RELEASE_HOOK(Vec4);
+	SQFUNC(Vec4GetW);
+	SQFUNC(Vec4SetW);
+
 	// -----------
 	//	ModelData
 	// -----------
@@ -67,6 +73,12 @@ namespace ulvl::app {
 	SQFUNC(ModelDataGetIndexCount);
 	SQFUNC(ModelDataSetIndexCount);
 	SQFUNC(ModelDataSetIndices);
+
+	// -------------
+	//	DebugVisual
+	// -------------
+
+	SQFUNC(DebugVisualDrawCube);
 
 	static void registerFuncs(SquirrelWrap& wrap) {
 		wrap.RegisterFunc(ToBytes);

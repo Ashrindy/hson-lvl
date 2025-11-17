@@ -1,6 +1,8 @@
 #include "sq-funcs.h"
 #include "../object-service.h"
+#include "../debug-visual-service.h"
 #include "../../app.h"
+#include <glm/gtx/quaternion.hpp>
 
 using namespace ulvl::app;
 
@@ -402,6 +404,45 @@ SQInteger ulvl::app::Vec3ReleaseHook(SQUserPointer p, SQInteger size) {
 	return 0;
 }
 
+// glm::vec4
+SQInteger ulvl::app::Vec4Ctor(HSQUIRRELVM vm) {
+	SQFloat x = 0, y = 0, z = 0, w = 0;
+
+	sq_getfloat(vm, 2, &x);
+	sq_getfloat(vm, 3, &y);
+	sq_getfloat(vm, 4, &z);
+	sq_getfloat(vm, 5, &w);
+
+	glm::vec4* obj = new glm::vec4{ x, y, z, w };
+	sq_setinstanceup(vm, 1, obj);
+	sq_setreleasehook(vm, 1, Vec4ReleaseHook);
+
+	return 0;
+}
+
+SQInteger ulvl::app::Vec4GetW(HSQUIRRELVM vm) {
+	glm::vec4* vec4{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&vec4, nullptr, SQFalse);
+
+	sq_pushfloat(vm, vec4->w);
+
+	return 1;
+}
+
+SQInteger ulvl::app::Vec4SetW(HSQUIRRELVM vm) {
+	glm::vec4* vec4{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&vec4, nullptr, SQFalse);
+	SQFloat val{};
+	sq_getfloat(vm, 2, &val);
+	vec4->w = val;
+	return 0;
+}
+
+SQInteger ulvl::app::Vec4ReleaseHook(SQUserPointer p, SQInteger size) {
+	delete (glm::vec4*)p;
+	return 0;
+}
+
 // ModelData
 
 SQInteger ulvl::app::ModelDataGetVertexCount(HSQUIRRELVM vm) {
@@ -492,6 +533,34 @@ SQInteger ulvl::app::ModelDataSetIndices(HSQUIRRELVM vm) {
 		modelData->indices[x] = val;
 		sq_pop(vm, 1);
 	}
+
+	return 0;
+}
+
+SQInteger ulvl::app::DebugVisualDrawCube(HSQUIRRELVM vm) {
+	DebugVisualService* debugVisual{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&debugVisual, nullptr, SQFalse);
+
+	glm::vec4* color{};
+	sq_getinstanceup(vm, 2, (SQUserPointer*)&color, nullptr, SQFalse);
+
+	glm::vec3* pos{};
+	sq_getinstanceup(vm, 3, (SQUserPointer*)&pos, nullptr, SQFalse);
+
+	glm::vec4* rot{};
+	sq_getinstanceup(vm, 4, (SQUserPointer*)&rot, nullptr, SQFalse);
+
+	glm::vec3* scale{};
+	sq_getinstanceup(vm, 5, (SQUserPointer*)&scale, nullptr, SQFalse);
+
+	ObjectService::Object* object{};
+	sq_getinstanceup(vm, 6, (SQUserPointer*)&object, nullptr, SQFalse);
+
+	gfx::InstancedMesh mesh{};
+	mesh.id = (int)object;
+	mesh.color = *color;
+	mesh.worldMatrix = glm::translate(glm::mat4{ 1 }, *pos) * glm::toMat4(*(glm::quat*)rot) * glm::scale(glm::mat4{ 1 }, *scale);
+	debugVisual->addCube(mesh);
 
 	return 0;
 }

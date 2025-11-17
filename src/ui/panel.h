@@ -16,6 +16,7 @@ namespace ulvl {
 		unsigned int id{ 0 };
 
 		virtual Properties GetProperties() { return {}; }
+		virtual void AddCallback() {}
 		virtual void RenderPanel() {}
 		void Render();
 	};

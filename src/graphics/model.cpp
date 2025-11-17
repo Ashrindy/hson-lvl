@@ -24,92 +24,20 @@ void Model::updateAabb() {
     }
 }
 
-Model::Model() {
-	init();
+Model::Model() : BaseModel{} {
+    init();
 }
 
 void Model::init() {
-	auto* graphics = Graphics::instance;
-	auto& ctx = graphics->renderCtx;
-
-    plume::RenderDescriptorRange range{};
-    range.type = plume::RenderDescriptorRangeType::CONSTANT_BUFFER;
-    range.binding = 0;
-    range.count = 1;
-
-    plume::RenderDescriptorSetDesc descriptorDesc{};
-    descriptorDesc.descriptorRanges = &range;
-    descriptorDesc.descriptorRangesCount = 1;
-
-    descriptor = ctx.device->createDescriptorSet(descriptorDesc);
-
-    plume::RenderPushConstantRange pushConstantRange{};
-    pushConstantRange.binding = 0;
-    pushConstantRange.set = 0;
-    pushConstantRange.offset = 0;
-    pushConstantRange.size = sizeof(glm::mat4);
-    pushConstantRange.stageFlags = plume::RenderShaderStageFlag::VERTEX;
-
-    plume::RenderPipelineLayoutDesc layoutDesc{};
-    layoutDesc.allowInputLayout = true;
-    layoutDesc.descriptorSetDescs = &descriptorDesc;
-    layoutDesc.descriptorSetDescsCount = 1;
-    layoutDesc.pushConstantRanges = &pushConstantRange;
-    layoutDesc.pushConstantRangesCount = 1;
-
-    pipelineLayout = ctx.device->createPipelineLayout(layoutDesc);
-
-    plume::RenderShaderFormat shaderFormat = ctx.renderInterface->getCapabilities().shaderFormat;
-
-    std::unique_ptr<plume::RenderShader> vertexShader;
-    std::unique_ptr<plume::RenderShader> fragmentShader;
-
-    switch (shaderFormat) {
-    case plume::RenderShaderFormat::SPIRV:
-        vertexShader = ctx.device->createShader(vs_shader, sizeof(vs_shader), "main", shaderFormat);
-        fragmentShader = ctx.device->createShader(ps_color_shader, sizeof(ps_color_shader), "main", shaderFormat);
-        break;
-    default:
-        assert(false && "Unknown shader format");
-    }
-
-    inputSlot = plume::RenderInputSlot{ 0, vertexStride };
-
-    vertexLayout = {
-        { "POSITION", 0, 0, plume::RenderFormat::R32G32B32_FLOAT, 0, 0                 },
-        { "TEXCOORD", 0, 1, plume::RenderFormat::R32G32_FLOAT,    0, sizeof(float) * 3 }
-    };
-
-    plume::RenderGraphicsPipelineDesc pipelineDesc{};
-    pipelineDesc.inputSlots = &inputSlot;
-    pipelineDesc.inputSlotsCount = 1;
-    pipelineDesc.inputElements = vertexLayout.data();
-    pipelineDesc.inputElementsCount = static_cast<uint32_t>(vertexLayout.size());
-    pipelineDesc.pipelineLayout = pipelineLayout.get();
-    pipelineDesc.vertexShader = vertexShader.get();
-    pipelineDesc.pixelShader = fragmentShader.get();
-    pipelineDesc.renderTargetFormat[0] = plume::RenderFormat::B8G8R8A8_UNORM;
-    pipelineDesc.renderTargetBlend[0] = plume::RenderBlendDesc::Copy();
-    pipelineDesc.renderTargetCount = 1;
-    pipelineDesc.primitiveTopology = plume::RenderPrimitiveTopology::TRIANGLE_LIST;
-
-    pipeline = ctx.device->createGraphicsPipeline(pipelineDesc);
-
-	updateWorldMatrix();
+    BaseModel::init();
+    
+    updateWorldMatrix();
     updateAabb();
 }
 
 void Model::shutdown() {
-    delete[] vertices;
-    vertices = nullptr;
-    vertexLayout.clear();
+    BaseModel::shutdown();
     meshes.clear();
-    indices.clear();
-    pipeline.reset();
-    descriptor.reset();
-    pipelineLayout.reset();
-    vertexBuffer.reset();
-    indexBuffer.reset();
 }
  
 void Model::setPosition(const glm::vec3& pos) {
@@ -140,7 +68,9 @@ void Model::setWorldMatrix(const glm::mat4& mat) {
 
 void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount, void* texture) {
     auto* gfx = Graphics::instance;
-	int indexOffset = this->indices.size();
+    auto& ctx = gfx->renderCtx;
+
+    int indexOffset = this->indices.size();
 	int vertexOffset = vertexCount;
 	meshes.emplace_back(indexOffset, icount, texture);
 
@@ -161,21 +91,19 @@ void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices
 		y += vertexOffset;
 	}
 
-    auto* graphics = Graphics::instance;
-    auto& ctx = graphics->renderCtx;
-
     unsigned int verticesSize = vertexCount * vertexStride;
     vertexBuffer = ctx.device->createBuffer(plume::RenderBufferDesc::VertexBuffer(verticesSize, plume::RenderHeapType::UPLOAD));
     void* bufferData = vertexBuffer->map();
-    std::memcpy(bufferData, this->vertices, verticesSize);
+    memcpy(bufferData, this->vertices, verticesSize);
     vertexBuffer->unmap();
 
-    vertexBufferView = plume::RenderVertexBufferView{ { vertexBuffer.get() }, verticesSize };
+    vertexBufferView.clear();
+    vertexBufferView.emplace_back(plume::RenderBufferReference{ vertexBuffer.get() }, verticesSize);
 
     unsigned int indicesSize = this->indices.size() * sizeof(unsigned short);
     indexBuffer = ctx.device->createBuffer(plume::RenderBufferDesc::IndexBuffer(indicesSize, plume::RenderHeapType::UPLOAD));
     bufferData = indexBuffer->map();
-    std::memcpy(bufferData, this->indices.data(), indicesSize);
+    memcpy(bufferData, this->indices.data(), indicesSize);
     indexBuffer->unmap();
 
     indexBufferView = plume::RenderIndexBufferView{ { indexBuffer.get() }, indicesSize, plume::RenderFormat::R16_UINT };
@@ -191,21 +119,15 @@ void Model::clearMeshes() {
     indices.clear();
 }
 
-size_t Model::getVertexLayoutOffset(const char* semanticName) const {
-    for (auto& l : vertexLayout)
-        if (strcmp(l.semanticName, semanticName) == 0)
-            return l.alignedByteOffset;
-
-    return 0;
-}
-
 void Model::render() {
+    if (!visible && meshes.size() == 0) return;
+
     auto* graphics = Graphics::instance;
     auto& ctx = graphics->renderCtx;
 
     ctx.commandList->setGraphicsPipelineLayout(pipelineLayout.get());
     ctx.commandList->setPipeline(pipeline.get());
-    ctx.commandList->setVertexBuffers(0, &vertexBufferView, 1, &inputSlot);
+    ctx.commandList->setVertexBuffers(0, vertexBufferView.data(), vertexBufferView.size(), inputSlots.data());
     ctx.commandList->setIndexBuffer(&indexBufferView);
 
     ctx.commandList->setGraphicsPushConstants(0, &worldMatrix, 0, sizeof(glm::mat4));

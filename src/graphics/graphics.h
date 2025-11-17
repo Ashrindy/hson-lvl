@@ -1,5 +1,5 @@
 #pragma once
-#include "model.h"
+#include "basemodel.h"
 #include "camera.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_properties.h>
@@ -35,6 +35,8 @@ namespace ulvl::gfx {
 			std::unique_ptr<plume::RenderBuffer> mainCBuffer;
 
 			std::unique_ptr<plume::RenderTexture> screenTex;
+			std::unique_ptr<plume::RenderTexture> screenDTex;
+			std::unique_ptr<plume::RenderTextureView> screenDTexView;
 			std::unique_ptr<plume::RenderFramebuffer> screenFb;
 			std::unique_ptr<plume::RenderDescriptorSet> screenDs;
 		};
@@ -54,7 +56,7 @@ namespace ulvl::gfx {
 		float deltaTime{ 0 };
 		Camera* camera;
 		const char* name{ "hson-lvl" };
-		std::vector<Model*> models;
+		std::vector<BaseModel*> models;
 		RenderContext renderCtx;
 
 		bool init();

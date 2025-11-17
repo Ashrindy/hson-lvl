@@ -22,7 +22,7 @@ void Viewport::RenderPanel() {
 	isHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
 }
 
-void Viewport::AfterRender() {
+void Viewport::PostRenderUI() {
 	auto* gfx = gfx::Graphics::instance;
 
 	if (pos.x != gfx->screenPosX || pos.y != gfx->screenPosY)

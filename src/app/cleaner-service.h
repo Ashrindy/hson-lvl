@@ -1,13 +1,16 @@
 #pragma once
 #include "service.h"
-#include "../graphics/model.h"
+#include "applistener.h"
+#include "../graphics/basemodel.h"
 
 namespace ulvl::app {
-	class CleanerService : public Service {
+	class CleanerService : public Service, ApplicationListener {
 	public:
-		std::vector<gfx::Model*> modelsForDeletion;
+		std::vector<gfx::BaseModel*> modelsForDeletion;
 
-		void deleteModel(gfx::Model* model);
+		virtual void AddCallback() override;
+		virtual void PostRenderUI() override { deleteAll(); }
+		void deleteModel(gfx::BaseModel* model);
 		void deleteAll();
 	};
 }

@@ -9,6 +9,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include "object-selection-manager.h"
 #include "cleaner-service.h"
+#include "debug-visual-service.h"
 
 using namespace ulvl::app;
 
@@ -17,6 +18,7 @@ ObjectService::Object::Object(const hl::guid& guid, hl::hson::object* object, hl
 
     updateModel();
     updateModelMat();
+    updateDebugVisual();
 
     gfx::Graphics::instance->models.push_back(model);
 }
@@ -197,6 +199,14 @@ void ObjectService::Object::updateModelMat() {
     for (auto* child : children) child->updateModelMat();
 }
 
+void ObjectService::Object::updateDebugVisual() {
+    auto* tem = Application::instance->getService<TemplateManager>()->currentTemplate;
+    auto* debugVisual = Application::instance->getService<DebugVisualService>();
+
+    debugVisual->removeCubes((int)this);
+    tem->addDebugVisual(this);
+}
+
 ObjectService::Object* ObjectService::addObject(const hl::guid& guid, hl::hson::object* hson, hl::hson::project* proj) {
     auto* object = new Object{ guid, hson, proj };
     objects.push_back(object);
@@ -251,8 +261,7 @@ ObjectService::Object* ObjectService::getObject(const hl::guid& guid) {
     return nullptr;
 }
 
-ObjectService::Object* ObjectService::createObject(hl::hson::project* proj)
-{
+ObjectService::Object* ObjectService::createObject(hl::hson::project* proj) {
     auto* hsonPair = proj->objects.emplace(hl::guid::random(), hl::hson::object{}).first;
     auto* obj = new Object{ hsonPair->first, proj->objects.get(hsonPair->first), proj };
     objects.push_back(obj);
@@ -266,8 +275,7 @@ ObjectService::Object* ObjectService::createObject(hl::hson::project* proj)
     return obj;
 }
 
-ObjectService::Object* ObjectService::createObject(hl::hson::project* proj, std::string& typeName, hl::set_object_type* type)
-{
+ObjectService::Object* ObjectService::createObject(hl::hson::project* proj, std::string& typeName, hl::set_object_type* type) {
     auto* app = ulvl::Application::instance;
     auto* tem = app->getService<TemplateManager>()->currentTemplate->hsonTemplate;
 
@@ -280,8 +288,7 @@ ObjectService::Object* ObjectService::createObject(hl::hson::project* proj, std:
     return obj;
 }
 
-ObjectService::Object* ObjectService::createInstanceOf(hl::hson::project* proj, const hl::guid& baseObj)
-{
+ObjectService::Object* ObjectService::createInstanceOf(hl::hson::project* proj, const hl::guid& baseObj) {
     auto* obj = createObject(proj);
     obj->hson->instanceOf = baseObj;
     return obj;

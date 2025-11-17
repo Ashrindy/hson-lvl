@@ -22,5 +22,6 @@ namespace ulvl::app {
 		void loadFile(const std::filesystem::path& path);
 		void registerFunction(SQFUNCTION func, const char* funcName);
 		ModelData callGetModelData(ObjectService::Object* obj);
+		void callAddDebugVisual(ObjectService::Object* obj);
 	};
 }

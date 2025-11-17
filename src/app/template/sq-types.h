@@ -34,6 +34,15 @@ namespace ulvl::app {
 		);
 
 		NEW_CLASS(
+			Vec4,
+			NEW_FUNC("constructor", Vec4Ctor)
+			NEW_MEMBER_R("x", Vec3GetX, Vec3SetX)
+			NEW_MEMBER_R("y", Vec3GetY, Vec3SetY)
+			NEW_MEMBER_R("z", Vec3GetZ, Vec3SetZ)
+			NEW_MEMBER_R("w", Vec4GetW, Vec4SetW)
+		);
+
+		NEW_CLASS(
 			Parameters,
 			NEW_FUNC("GetParameterFloat", GetParameterFloat)
 			NEW_FUNC("GetParameterInt", GetParameterInt)
@@ -65,6 +74,11 @@ namespace ulvl::app {
 			NEW_FUNC("GetIndexCount", ModelDataGetIndexCount)
 			NEW_FUNC("SetIndexCount", ModelDataSetIndexCount)
 			NEW_FUNC("SetIndices", ModelDataSetIndices)
+		);
+
+		NEW_CLASS(
+			DebugVisual,
+			NEW_FUNC("DrawCube", DebugVisualDrawCube)
 		);
 	}
 }

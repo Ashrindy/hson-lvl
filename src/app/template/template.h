@@ -35,5 +35,6 @@ namespace ulvl::app {
 
 		Template(const char* templateName);
 		ModelData getModelData(ObjectService::Object* obj);
+		void addDebugVisual(ObjectService::Object* obj);
 	};
 }
