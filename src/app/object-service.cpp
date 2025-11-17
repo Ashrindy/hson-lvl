@@ -4,6 +4,7 @@
 #include "../app.h"
 #include "../graphics/graphics.h"
 #include "../math/mat.h"
+#include "../utilities/hson.h"
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include "object-selection-manager.h"
@@ -196,10 +197,6 @@ void ObjectService::Object::updateModelMat() {
     for (auto* child : children) child->updateModelMat();
 }
 
-void ObjectService::Object::updateHsonPtr() {
-    hson = &owner->objects[guid];
-}
-
 ObjectService::Object* ObjectService::addObject(const hl::guid& guid, hl::hson::object* hson, hl::hson::project* proj) {
     auto* object = new Object{ guid, hson, proj };
     objects.push_back(object);
@@ -220,12 +217,14 @@ void ObjectService::removeObject(Object* object, bool removeFromLayer) {
 
     if (object->owner) {
         hl::ordered_map<hl::guid, hl::hson::object>& objs{ object->owner->objects };
+        int idx{ 0 };
         for (auto it = objs.begin(); it != objs.end(); ++it) {
-            if (it->first == object->guid) {
-                //objs.erase(it);
+            if (it->first == object->guid)
                 break;
-            }
+            idx++;
         }
+
+        objs.erase(objs.begin() + idx);
 
         if (removeFromLayer) {
             auto* projMgr = app->getService<ProjectManager>();
@@ -236,9 +235,6 @@ void ObjectService::removeObject(Object* object, bool removeFromLayer) {
     }
 
     objects.erase(std::remove(objects.begin(), objects.end(), object));
-
-    for (auto* object : objects)
-        object->updateHsonPtr();
 
     delete object;
 }
@@ -253,4 +249,40 @@ ObjectService::Object* ObjectService::getObject(const hl::guid& guid) {
             return object;
 
     return nullptr;
+}
+
+ObjectService::Object* ObjectService::createObject(hl::hson::project* proj)
+{
+    auto* hsonPair = proj->objects.emplace(hl::guid::random(), hl::hson::object{}).first;
+    auto* obj = new Object{ hsonPair->first, proj->objects.get(hsonPair->first), proj };
+    objects.push_back(obj);
+
+    auto* app = ulvl::Application::instance;
+    auto* projMgr = app->getService<ProjectManager>();
+
+    if (auto* layer = projMgr->getLayer(proj))
+        layer->objects.push_back(obj);
+
+    return obj;
+}
+
+ObjectService::Object* ObjectService::createObject(hl::hson::project* proj, std::string& typeName, hl::set_object_type* type)
+{
+    auto* app = ulvl::Application::instance;
+    auto* tem = app->getService<TemplateManager>()->currentTemplate->hsonTemplate;
+
+    auto* obj = createObject(proj);
+    auto* hson = obj->hson;
+
+    hson->type = typeName;
+    hson->parameters = ut::createStruct(tem->structs[type->structType]);
+
+    return obj;
+}
+
+ObjectService::Object* ObjectService::createInstanceOf(hl::hson::project* proj, const hl::guid& baseObj)
+{
+    auto* obj = createObject(proj);
+    obj->hson->instanceOf = baseObj;
+    return obj;
 }

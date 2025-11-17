@@ -27,6 +27,7 @@ namespace ulvl {
 		FrameTimer frameTimer;
 		SDL_Event e;
 		std::vector<Panel*> panels;
+		std::vector<Panel*> panelsToBeAdded;
 		std::vector<app::Service*> services;
 		std::vector<app::ApplicationListener*> appListeners;
 
@@ -34,14 +35,39 @@ namespace ulvl {
 		void loop();
 		template<typename T>
 		void addPanel() {
-			panels.push_back(new T{});
+			panelsToBeAdded.push_back(new T{});
+		}
+		template<typename T>
+		void addPanel(unsigned int id) {
+			auto* panel = new T{};
+			panel->id = id;
+			panelsToBeAdded.push_back(panel);
 		}
 		template<typename T>
 		T* getPanel() {
 			for (auto* panel : panels)
 				if (T* tPanel = dynamic_cast<T*>(panel))
 					return tPanel;
+			for (auto* panel : panelsToBeAdded)
+				if (T* tPanel = dynamic_cast<T*>(panel))
+					return tPanel;
 			return nullptr;
+		}
+		template<typename T>
+		T* getPanel(unsigned int id) {
+			for (auto* panel : panels)
+				if (T* tPanel = dynamic_cast<T*>(panel))
+					if (panel->id == id)
+						return tPanel;
+			for (auto* panel : panelsToBeAdded)
+				if (T* tPanel = dynamic_cast<T*>(panel))
+					if (panel->id == id)
+						return tPanel;
+			return nullptr;
+		}
+		void removePanel(Panel* panel) {
+			panels.erase(std::remove(panels.begin(), panels.end(), panel));
+			delete panel;
 		}
 		template<typename T>
 		void addService() {

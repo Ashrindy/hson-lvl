@@ -1,6 +1,7 @@
 #include "object-list.h"
 #include "../app/project-manager.h"
 #include "../ui/editors/basic.h"
+#include "layer-properties.h"
 
 using namespace ulvl;
 
@@ -69,7 +70,29 @@ void RenderObject(app::ObjectService::Object* object) {
 	}
 
 	if (ImGui::BeginPopupContextItem()) {
-		if (ImGui::Selectable("Remove")) {
+		if (object->hson->instanceOf == hl::guid::zero() && 
+			ImGui::MenuItem("Create New Instance")) 
+		{
+			auto* newInstance = objectService->createInstanceOf(object->owner, object->guid);
+			newInstance->hson->type = object->hson->type;
+			if (object->hson->name.has_value()) {
+				size_t instanceIdx = 0;
+				newInstance->hson->name = std::string{};
+				auto& instanceName = newInstance->hson->name.value();
+				instanceName = object->hson->name.value() + "_instance";
+
+				for (auto& objec : object->owner->objects)
+					if (objec.second.name.has_value()) {
+						auto& existingName = objec.second.name.value();
+						if (objec.first != newInstance->guid && existingName.find(instanceName) != std::string::npos)
+							instanceIdx++;
+					}
+
+				instanceName += std::to_string(instanceIdx);
+			}
+		}
+
+		if (ImGui::MenuItem("Remove")) {
 			objectService->removeObject(object);
 			hasBeenDeleted = true;
 		}
@@ -91,13 +114,17 @@ void RenderObject(app::ObjectService::Object* object) {
 void RenderLayer(app::ProjectManager::Layer* layer) {
 	ImGui::PushID(layer);
 
-	bool isOpen = ImGui::TreeNode(layer->hsonPath.stem().string().c_str());
+	auto name = layer->getName();
+	bool isOpen = ImGui::TreeNode(name.c_str());
 
 	if (ImGui::BeginPopupContextItem()) {
 		if (ImGui::MenuItem("Save", "Ctrl+S"))
 			layer->save();
-		if (ImGui::MenuItem("Close"))
-		{
+
+		if (ImGui::MenuItem("Delete")) {
+			if (std::filesystem::exists(layer->hsonPath))
+				std::filesystem::remove(layer->hsonPath);
+
 			auto* projMgr = Application::instance->getService<app::ProjectManager>();
 			bool inProj{ true };
 			for (auto* lay : projMgr->layers)
@@ -117,11 +144,43 @@ void RenderLayer(app::ProjectManager::Layer* layer) {
 			}
 		}
 
+		if (ImGui::MenuItem("Close")) {
+			auto* projMgr = Application::instance->getService<app::ProjectManager>();
+			bool inProj{ true };
+			for (auto* lay : projMgr->layers)
+				if (lay == layer) {
+					projMgr->closeLayer(layer);
+					inProj = false;
+					break;
+				}
+
+			if (inProj) {
+				for (auto* proj : projMgr->projects)
+					for (auto* lay : proj->layers)
+						if (lay == layer) {
+							proj->closeLayer(layer);
+							break;
+						}
+			}
+		}
+
+		ImGui::Separator();
+
+		if (ImGui::MenuItem("Properties", "")) {
+			auto* app = Application::instance;
+			unsigned int id = (unsigned int)layer;
+			app->addPanel<LayerProperties>(id);
+			app->getPanel<LayerProperties>(id)->layer = layer;
+		}
+
 		ImGui::EndPopup();
 	}
 
 	if (isOpen) {
-		for (auto* object : layer->objects) {
+		size_t layerSize = layer->objects.size();
+		for (size_t x = 0; x < layerSize; x++) {
+			auto* object = layer->objects[x];
+
 			if (object->hasParent()) continue;
 
 			RenderObject(object);

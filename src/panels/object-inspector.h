@@ -16,9 +16,10 @@ namespace ulvl {
 			return { .name = "Object Inspector", .position = { 150, 100 }, .size = { 100, 350 }, .pivot{ 0, 0 } };
 		}
 
-		bool StructEditor(hl::radix_tree<hl::hson::parameter>& parameters, hl::reflect::struct_definition& structDef);
 
 		bool ParamEditor(const char* name, hl::hson::parameter& param, hl::reflect::field_definition& fieldDef);
+		bool StructEditor(hl::radix_tree<hl::hson::parameter>& parameters, hl::radix_tree<hl::hson::parameter>& instanceParameters, hl::reflect::struct_definition& structDef);
+		bool StructEditor(hl::radix_tree<hl::hson::parameter>& parameters, hl::reflect::struct_definition& structDef);
 
 		virtual void RenderPanel() {
 			auto* app = Application::instance;
@@ -57,12 +58,8 @@ namespace ulvl {
 
 			auto* hsonTemplate = Application::instance->getService<app::TemplateManager>()->currentTemplate->hsonTemplate;
 			if (selected->hson->instanceOf != hl::guid{ 0 }) {
-				ImGui::BeginDisabled();
-
-				if (changed |= StructEditor(objService->getObject(selected->hson->instanceOf)->hson->parameters, hsonTemplate->structs[hsonTemplate->operator[](selected->hson->type).structType]))
+				if (changed |= StructEditor(objService->getObject(selected->hson->instanceOf)->hson->parameters, selected->hson->parameters, hsonTemplate->structs[hsonTemplate->operator[](selected->hson->type).structType]))
 					selected->updateModel();
-
-				ImGui::EndDisabled();
 			}
 			else
 				if (changed |= StructEditor(selected->hson->parameters, hsonTemplate->structs[hsonTemplate->operator[](selected->hson->type).structType]))

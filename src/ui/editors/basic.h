@@ -9,5 +9,6 @@ namespace ulvl {
 	bool Editor(const char* label, float& value);
 	bool Editor(const char* label, double& value);
 	bool Editor(const char* label, std::string& value);
+	bool EditorMultiLine(const char* label, std::string& value);
 	void Editor(const char* label, const char* value);
 }

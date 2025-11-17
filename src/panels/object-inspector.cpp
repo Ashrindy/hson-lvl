@@ -215,12 +215,79 @@ bool ObjectInspector::StructEditor(hl::radix_tree<hl::hson::parameter>& paramete
 	bool changed{ false };
 	auto* hsonTemplate = Application::instance->getService<app::TemplateManager>()->currentTemplate->hsonTemplate;
 
+	if (structDef.parent != "") {
+		auto& parent = hsonTemplate->structs[structDef.parent];
+		StructEditor(parameters, parent);
+	}
+	
 	for (auto parameter : parameters) {
 		for (auto& field : structDef.fields)
 			if (field.name == parameter.first) {
 				changed |= ParamEditor(parameter.first, parameter.second, field);
 				break;
 			}
+	}
+	return changed;
+}
+
+bool ObjectInspector::StructEditor(hl::radix_tree<hl::hson::parameter>& parameters, hl::radix_tree<hl::hson::parameter>& instanceParameters, hl::reflect::struct_definition& structDef)
+{
+	bool changed{ false };
+	auto* hsonTemplate = Application::instance->getService<app::TemplateManager>()->currentTemplate->hsonTemplate;
+
+	if (structDef.parent != "") {
+		auto& parent = hsonTemplate->structs[structDef.parent];
+		StructEditor(parameters, instanceParameters, parent);
+	}
+
+	for (auto parameter : parameters) {
+		for (auto& field : structDef.fields) {
+			if (field.name == parameter.first) {
+				ImGui::PushID(parameters.get(parameter.first));
+
+				if (auto* instanceParam = instanceParameters.get(field.name)) {
+					changed |= ParamEditor(parameter.first, *instanceParam, field);
+
+					if (ImGui::BeginPopupContextItem("instanceparam")) {
+						if (ImGui::MenuItem("Remove Override")) {
+							auto oldTree = instanceParameters;
+							instanceParameters.clear();
+							for (auto node : oldTree)
+								if (strcmp(node.first, parameter.first) != 0)
+									instanceParameters.insert(node.first, node.second);
+
+							oldTree.clear();
+						}
+
+						ImGui::EndPopup();
+					}
+				}
+				else {
+					auto prePos = ImGui::GetCursorPos();
+
+					ImGui::BeginDisabled();
+					changed |= ParamEditor(parameter.first, parameter.second, field);
+					ImGui::EndDisabled();
+
+					ImVec2 size = ImGui::GetItemRectSize();
+
+					ImGui::SetCursorPos(prePos);
+
+					ImGui::InvisibleButton("context_btn", size);
+
+					if (ImGui::BeginPopupContextItem("instanceofparam")) {
+						if (ImGui::MenuItem("Override"))
+							instanceParameters.insert(parameter.first, parameter.second);
+
+						ImGui::EndPopup();
+					}
+
+				}
+
+				ImGui::PopID();
+				break;
+			}
+		}
 	}
 	return changed;
 }

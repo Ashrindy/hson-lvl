@@ -16,6 +16,7 @@ namespace ulvl::app {
 			Layer(const std::filesystem::path& hsonPath);
 			Layer(const std::string& name);
 			void save();
+			std::string getName() const;
 		};
 
 		struct Project {

@@ -2,6 +2,7 @@
 #include "service.h"
 #include "../graphics/model.h"
 #include <hedgelib/hh/hl_hh_gedit.h>
+#include <hedgelib/sets/hl_set_obj_type.h>
 
 namespace ulvl::app {
 	class ObjectService : public Service {
@@ -41,7 +42,6 @@ namespace ulvl::app {
 			}
 			void updateModel();
 			void updateModelMat();
-			void updateHsonPtr();
 		};
 
 		std::vector<Object*> objects;
@@ -50,5 +50,8 @@ namespace ulvl::app {
 		void removeObject(Object* object, bool removeFromLayer = true);
 		void removeObject(const hl::guid& guid, bool removeFromLayer = true);
 		Object* getObject(const hl::guid& guid);
+		Object* createObject(hl::hson::project* proj);
+		Object* createObject(hl::hson::project* proj, std::string& typeName, hl::set_object_type* type);
+		Object* createInstanceOf(hl::hson::project* proj, const hl::guid& baseObj);
 	};
 }

@@ -13,7 +13,7 @@ add_executable (${HE_LEVEL_NAME}
 	"graphics/model.h" 
 	"graphics/model.cpp"
 	"graphics/fonts/Inter.h"
-	#"graphics/fonts/NotoSansJP.h"
+#	"graphics/fonts/NotoSansJP.h"
 	"graphics/shaders/vs.h"
 	"graphics/shaders/ps.h"
 	"graphics/shaders/ps_color.h" 
@@ -51,16 +51,19 @@ add_executable (${HE_LEVEL_NAME}
 	"app/template/sq-funcs.cpp"
 	"app/template/sq-types.h" 
 	
-	"panels/object-list.h"
     "panels/object-inspector.h"
 	"panels/object-inspector.cpp" 
 	"panels/object-library.h"
 	"panels/viewport.h" 
 	"panels/viewport.cpp"
+	"panels/object-list.h"
 	"panels/object-list.cpp"
+	"panels/layer-properties.h"
+	"panels/layer-properties.cpp"
 
 	"ui/toolbar.h"
-	"ui/panel.h" 
+	"ui/panel.h"
+	"ui/panel.cpp"
 
 	"ui/editors/glm.h" 
 	"ui/editors/glm.cpp" 
@@ -68,8 +71,8 @@ add_executable (${HE_LEVEL_NAME}
 	"ui/editors/basic.cpp"
 
 	"utilities/hson.h" 
-	"utilities/hson.cpp" 
-)
+	"utilities/hson.cpp"
+ )
 
 target_precompile_headers(${HE_LEVEL_NAME} PRIVATE "pch.h")
 

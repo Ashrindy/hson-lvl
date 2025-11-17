@@ -55,6 +55,11 @@ void Application::loop()
 {
     while (isRunning) {
         frameTimer.update();
+
+        for (auto* panel : panelsToBeAdded)
+            panels.push_back(panel);
+        panelsToBeAdded.clear();
+
         update();
         graphics->renderBegin();
         for (auto* listener : appListeners)

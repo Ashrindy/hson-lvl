@@ -1,5 +1,6 @@
 #include "project-manager.h"
 #include "../app.h"
+#include <chrono>
 
 using namespace ulvl::app;
 
@@ -137,7 +138,7 @@ ProjectManager::Layer::Layer(const std::filesystem::path& hsonPath) : hsonPath{ 
 	hson = new hl::hson::project{ hsonPath };
 	auto* objectService = Application::instance->getService<ObjectService>();
 	for (auto& object : hson->objects)
-		objects.push_back(objectService->addObject(object.first, &object.second, hson));
+		objects.push_back(objectService->addObject(object.first, hson->objects.get(object.first), hson));
 	for (auto* object : objects)
 		object->updateChildren();
 }
@@ -151,5 +152,17 @@ ProjectManager::Layer::Layer(const std::string& name) : hsonPath{ name } {
 
 void ProjectManager::Layer::save() {
 	Application::instance->getService<ProjectManager>()->setUnsaved(false);
+	auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+	hson->metadata.date = std::format("{:%Y-%m-%dT%H:%M:%SZ}", now);
 	hson->save(hsonPath);
+}
+
+std::string ulvl::app::ProjectManager::Layer::getName() const
+{
+	std::string name{ hsonPath.stem().string() };
+
+	if (hson->metadata.name != "")
+		name = hson->metadata.name;
+
+	return name;
 }

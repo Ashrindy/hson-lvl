@@ -44,24 +44,43 @@ bool ulvl::Editor(const char* label, double& value) {
 }
 
 bool ulvl::Editor(const char* label, std::string& value) {
-	bool changed{ false };
+	char* buf = value.data();
+	size_t buf_size = value.capacity() + 1;
 
-	std::vector<char> buf{ value.begin(), value.end() };
-	buf.push_back('\0');
+	ImGuiInputTextFlags flags = ImGuiInputTextFlags_CallbackResize;
 
-	changed |= ImGui::InputText(label, buf.data(), buf.size(), ImGuiInputTextFlags_CallbackResize,
+	bool changed = ImGui::InputText(label, buf, buf_size, flags,
 		[](ImGuiInputTextCallbackData* data) -> int {
 			if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
-				auto* str = (std::string*)data->UserData;
+				auto* str = static_cast<std::string*>(data->UserData);
 				str->resize(data->BufTextLen);
 				data->Buf = str->data();
 			}
 			return 0;
 		},
-		&value);
+		&value
+	);
 
-	if (changed)
-		value = buf.data();
+	return changed;
+}
+
+bool ulvl::EditorMultiLine(const char* label, std::string& value) {
+	char* buf = value.data();
+	size_t buf_size = value.capacity() + 1;
+
+	ImGuiInputTextFlags flags = ImGuiInputTextFlags_CallbackResize;
+
+	bool changed = ImGui::InputTextMultiline(label, buf, buf_size, { 0, 150 }, flags,
+		[](ImGuiInputTextCallbackData* data) -> int {
+			if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
+				auto* str = static_cast<std::string*>(data->UserData);
+				str->resize(data->BufTextLen);
+				data->Buf = str->data();
+			}
+			return 0;
+		},
+		&value
+	);
 
 	return changed;
 }

@@ -5,7 +5,7 @@
 hl::hson::parameter ulvl::ut::createParameterByType(const char* type) {
 	hl::hson::parameter param{};
 	auto* app = ulvl::Application::instance;
-	auto* tem = app->getService<ulvl::app::TemplateManager>()->currentTemplate;
+	auto* tem = app->getService<ulvl::app::TemplateManager>()->currentTemplate->hsonTemplate;
 
 	if (hl::reflect::is_bool_type(type))
 	{
@@ -57,21 +57,54 @@ hl::hson::parameter ulvl::ut::createParameterByType(const char* type) {
 		if (hl::reflect::is_quat_type(type))
 			param.value_array()[3].value_floating() = 1;
 	}
-	else if (tem->hsonTemplate->enums.contains(type)) {
-		auto enu = tem->hsonTemplate->enums.get(type);
+	else if (tem->enums.contains(type)) {
+		auto enu = tem->enums.get(type);
 
 		param = hl::hson::parameter{ hl::hson::parameter_type::string };
 		param.value_string() = enu->get_name_of_value(0);
 	}
-	else if (tem->hsonTemplate->structs.contains(type)) {
-		auto stru = tem->hsonTemplate->structs.get(type);
+	else if (tem->structs.contains(type)) {
+		auto stru = tem->structs.get(type);
 
 		param = hl::hson::parameter{ hl::hson::parameter_type::object };
-		for (auto fld : tem->hsonTemplate->structs.get(stru->parent)->fields)
-			param.value_object().insert(fld.name, createParameterByType(fld.type().c_str()));
+		for (auto fld : tem->structs.get(stru->parent)->fields)
+			param.value_object().insert(fld.name, createParameterByType(fld.type()));
 		for (auto fld : stru->fields)
-			param.value_object().insert(fld.name, createParameterByType(fld.type().c_str()));
+			param.value_object().insert(fld.name, createParameterByType(fld.type()));
 	}
 
 	return param;
+}
+
+hl::hson::parameter ulvl::ut::createParam(hl::reflect::field_definition& fieldDef)
+{
+	hl::hson::parameter param{ createParameterByType(fieldDef.type()) };
+
+	if (hl::reflect::is_array_type(fieldDef.type())) {
+		for (size_t x = 0; x < fieldDef.array_count(); x++)
+			param.value_array().push_back(
+				createParameterByType(fieldDef.subtype())
+			);
+	}
+
+	return param;
+}
+
+hl::radix_tree<hl::hson::parameter> ulvl::ut::createStruct(hl::reflect::struct_definition& structDef)
+{
+	hl::radix_tree<hl::hson::parameter> params{};
+	auto* app = ulvl::Application::instance;
+	auto* tem = app->getService<ulvl::app::TemplateManager>()->currentTemplate->hsonTemplate;
+
+	if (structDef.parent != "") {
+		auto& parent = tem->structs[structDef.parent];
+		auto parentParams = createStruct(parent);
+		for (auto param : parentParams)
+			params.insert(param.first, param.second);
+	}
+
+	for (auto& field : structDef.fields)
+		params.insert(field.name, createParam(field));
+
+	return params;
 }
