@@ -2,13 +2,13 @@
 
 ## Classes
 
-### String {#string}
+### String
 A wrapper for `std::string` so that C++ can easily manipulate with strings.
 #### Functions
 - `String(string value)` - constructor
 - `c_str()` - returns Squirrels string
 
-### Vec3 {#vec3}
+### Vec3
 A wrapper for `glm::vec3`.
 #### Functions
 - `Vec3(float x, float y, float z)` - constructor
@@ -25,7 +25,7 @@ A wrapper for `glm::vec4`/`glm::quat`.
 - `z()` - get or set the Z value
 - `w()` - get or set the W value
 
-### Parameters {#parameters}
+### Parameters
 A wrapper for `hl::radix_tree<hl::hson::parameter>`.
 #### Functions
 - `GetParameterFloat(string name)` - get the value of a float parameter based on name
@@ -35,7 +35,7 @@ A wrapper for `hl::radix_tree<hl::hson::parameter>`.
 - `GetParameterArray(string name)` - get an array of values of a parameter based on name
 - `GetParameterObject(string name)` - get the value of an object parameter based on name (returns the custom [Parameters](#parameters) class)
 
-### Object {#object}
+### Object
 A wrapper for `ulvl::app::ObjectService::Object`.
 #### Functions
 - `position()` - get the world position of the object (returns the custom [Vec3](#vec3) class)
@@ -43,10 +43,10 @@ A wrapper for `ulvl::app::ObjectService::Object`.
 - `name()` - get the name of the object (returns the custom [String](#string) class)
 - `parameters()` - get the parameters of the object (returns the custom [Parameters](#parameters) class)
 - `parent()` - get the parent object of the object (returns the custom [Object](#object) class)
-- `id()` - get the object's guid of the object (returns string)
+- `id()` - get the object's guid of the object (returns Squirrels string)
 - `HasParent()` - returns true or false whether the object has a parent
 
-### ModelData {#modeldata}
+### ModelData
 A class used for setting the model of an object.
 Indices are always u16.
 #### Functions
@@ -59,7 +59,7 @@ Indices are always u16.
 - `SetIndexCount(int count)` - set the index count
 - `SetIndices(unsigned short* indices)` - set the indices
 
-### DebugVisual {#debugvisual}
+### DebugVisual
 A class used for adding debug visuals to the scene.
 #### Functions
 - `DrawCube(Vec4 color, Vec3 position, Vec4 rotation, Vec3 scale, Object obj)` - adds a cube debug visual
