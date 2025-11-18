@@ -4,6 +4,7 @@
 #include "../app/object-selection-manager.h"
 #include "../app/project-manager.h"
 #include "../app/file-dialog-service.h"
+#include "../panels/settings.h"
 
 namespace ulvl {
 	void ToolBar() {
@@ -15,15 +16,19 @@ namespace ulvl {
 		if (ImGui::BeginMainMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
 				if (ImGui::BeginMenu("New")) {
-					if (ImGui::MenuItem("Layer", "Ctrl+N")) projectMgr->newLayer();
-					if (ImGui::MenuItem("Project", "Ctrl+Shift+N")) projectMgr->newProj();
+					if (ImGui::MenuItem("Layer", "Ctrl+N", nullptr, projectMgr->canNew())) projectMgr->newLayer();
+					if (ImGui::MenuItem("Project", "Ctrl+Shift+N", nullptr, projectMgr->canNew())) projectMgr->newProj();
 					ImGui::EndMenu();
 				}
-				if (ImGui::MenuItem("Open", "Ctrl+O")) fileDialogServ->open();
-				if (ImGui::MenuItem("Save", "Ctrl+S")) objSelectMgr->save();
-				if (ImGui::MenuItem("Save All", "Ctrl+Shift+S")) projectMgr->saveAll();
+				if (ImGui::MenuItem("Open", "Ctrl+O", nullptr, fileDialogServ->canOpen())) fileDialogServ->open();
+				if (ImGui::MenuItem("Save", "Ctrl+S", nullptr, objSelectMgr->canSave())) objSelectMgr->save();
+				if (ImGui::MenuItem("Save All", "Ctrl+Shift+S", nullptr, projectMgr->canSaveAll())) projectMgr->saveAll();
 
 				ImGui::EndMenu();
+			}
+
+			if (ImGui::MenuItem("Settings")) {
+				app->addPanel<SettingsPanel>();
 			}
 
 			ImGui::EndMainMenuBar();

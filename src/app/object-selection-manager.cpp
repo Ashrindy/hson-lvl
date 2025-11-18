@@ -59,6 +59,8 @@ void ObjectSelectionManager::renderGizmo() {
 }
 
 void ObjectSelectionManager::save() {
+	if (!canSave()) return;
+
 	auto* app = Application::instance;
 	auto* projectMgr = app->getService<app::ProjectManager>();
 	auto* objSelectMgr = app->getService<app::ObjectSelectionManager>();

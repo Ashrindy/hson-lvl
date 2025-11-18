@@ -1,4 +1,5 @@
 #include "project-manager.h"
+#include "template-manager.h"
 #include "../app.h"
 #include <chrono>
 
@@ -89,14 +90,24 @@ void ProjectManager::setUnsaved(bool unsaved) {
 }
 
 void ProjectManager::newProj() {
+	if (!canNew()) return;
+
 	addProject("new-project");
 }
 
+bool ProjectManager::canNew() const {
+	return Application::instance->getService<TemplateManager>()->currentTemplate;
+}
+
 void ProjectManager::newLayer() {
+	if (!canNew()) return;
+
 	addLayer("new-layer");
 }
 
 void ProjectManager::saveAll() {
+	if (!canSaveAll()) return;
+
 	for (auto* project : projects)
 		project->save();
 	for (auto* layer : layers)
@@ -125,6 +136,13 @@ void ProjectManager::closeLayer(Layer* layer) {
 	layer->hson->clear();
 	delete layer->hson;
 	delete layer;
+}
+
+void ProjectManager::closeAll() {
+	for (auto* layer : layers)
+		closeLayer(layer);
+	for (auto* proj : projects)
+		closeProject(proj);
 }
 
 void ProjectManager::EventCallback(SDL_Event e) {

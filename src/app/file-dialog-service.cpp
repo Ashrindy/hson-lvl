@@ -1,5 +1,6 @@
 #include "file-dialog-service.h"
 #include "project-manager.h"
+#include "template-manager.h"
 #include "../app.h"
 
 using namespace ulvl::app;
@@ -21,6 +22,8 @@ bool FileDialogService::openDialog(nfdopendialogu8args_t args, std::filesystem::
 }
 
 void FileDialogService::open() {
+	if (!canOpen()) return;
+
 	std::filesystem::path out{};
 	nfdu8filteritem_t filters = { "Layer", "hson" };
 	nfdopendialogu8args_t args{};
@@ -29,4 +32,8 @@ void FileDialogService::open() {
 	if (openDialog(args, out)) {
 		Application::instance->getService<ProjectManager>()->loadLayer(out);
 	}
+}
+
+bool ulvl::app::FileDialogService::canOpen() const {
+	return Application::instance->getService<TemplateManager>()->currentTemplate;
 }

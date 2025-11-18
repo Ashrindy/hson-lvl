@@ -31,14 +31,24 @@ namespace ulvl {
 		std::vector<app::Service*> services;
 		std::vector<app::ApplicationListener*> appListeners;
 
-		void init();
+		void init(int argc, char** argv);
 		void loop();
 		template<typename T>
+		bool panelExists() {
+			return getPanel<T>();
+		}
+		template<typename T>
+		bool panelExists(unsigned int id = 0) {
+			return getPanel<T>(id);
+		}
+		template<typename T>
 		void addPanel() {
+			if (panelExists<T>()) return;
 			panelsToBeAdded.push_back(new T{});
 		}
 		template<typename T>
 		void addPanel(unsigned int id) {
+			if (panelExists<T>(id)) return;
 			auto* panel = new T{};
 			panel->id = id;
 			panelsToBeAdded.push_back(panel);

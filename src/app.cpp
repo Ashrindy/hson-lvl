@@ -11,15 +11,17 @@
 #include "app/file-dialog-service.h"
 #include "app/cleaner-service.h"
 #include "app/debug-visual-service.h"
+#include "app/settings-manager.h"
 #include <imgui_impl_sdl3.h>
 
 using namespace ulvl;
+namespace fs = std::filesystem;
 
 Application* Application::instance = nullptr;
 
-void Application::init() {
-	graphics = new gfx::Graphics;
-	graphics->init();
+void Application::init(int argc, char** argv) {
+    graphics = new gfx::Graphics;
+    graphics->init();
 
     instance = this;
 
@@ -32,13 +34,25 @@ void Application::init() {
     addService<app::ObjectService>();
     addService<app::ProjectManager>();
     addService<app::ObjectSelectionManager>();
+    addService<app::SettingsManager>();
     addService<app::TemplateManager>();
     addService<app::FileDialogService>();
     addService<app::CleanerService>();
     addService<app::DebugVisualService>();
 
-    getService<app::TemplateManager>()->loadTemplate("rangers");
-    getService<app::ProjectManager>()->loadProject("E:\\Steam\\steamapps\\common\\SonicFrontiers\\image\\x64\\raw\\gedit\\w6d01_gedit");
+    if (argc > 1) {
+        fs::path path{ rel_to_exe(argv[1]) };
+        if (fs::exists(path)) {
+            auto* projMgr = getService<app::ProjectManager>();
+            if (path.has_extension()) {
+                projMgr->addProject(path.parent_path().stem().string().c_str());
+                projMgr->projects[0]->loadLayer(path);
+            }
+            else {
+                projMgr->loadProject(path);
+            }
+        }
+    }
 
     /*getService<app::TemplateManager>()->loadTemplate("gens");
     getService<app::ProjectManager>()->addProject("greenhill");

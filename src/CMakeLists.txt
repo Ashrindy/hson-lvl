@@ -21,7 +21,9 @@ add_executable (${HE_LEVEL_NAME}
 	"graphics/shaders/vs.h"
 	"graphics/shaders/ps.h"
 	"graphics/shaders/ps_color.h" 
-	"graphics/shaders/vs_matless.h"   
+	"graphics/shaders/vs_matless.h"  
+	"graphics/shaders/instance_vs.h"
+	"graphics/shaders/color_ps.h"
 
 	"math/aabb.h"
 	"math/ray.h"
@@ -46,6 +48,8 @@ add_executable (${HE_LEVEL_NAME}
 	"app/file-dialog-service.cpp"
 	"app/cleaner-service.h"
 	"app/cleaner-service.cpp"
+	"app/settings-manager.h"
+	"app/settings-manager.cpp"
 
 	"app/template/template.h"
 	"app/template/template.cpp"
@@ -64,6 +68,8 @@ add_executable (${HE_LEVEL_NAME}
 	"panels/object-list.cpp"
 	"panels/layer-properties.h"
 	"panels/layer-properties.cpp"
+	"panels/settings.h"
+	"panels/settings.cpp"
 
 	"ui/toolbar.h"
 	"ui/panel.h"
@@ -76,7 +82,7 @@ add_executable (${HE_LEVEL_NAME}
 
 	"utilities/hson.h" 
 	"utilities/hson.cpp"
- "graphics/shaders/instance_vs.h" "graphics/shaders/color_ps.h")
+)
 
 target_precompile_headers(${HE_LEVEL_NAME} PRIVATE "pch.h")
 

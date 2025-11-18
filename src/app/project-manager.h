@@ -45,10 +45,13 @@ namespace ulvl::app {
 		Layer* getLayer(const hl::hson::project* project);
 		void setUnsaved(bool unsaved);
 		void newProj();
+		bool canNew() const;
 		void newLayer();
+		inline bool canSaveAll() const { return projects.size() > 0 || layers.size() > 0; }
 		void saveAll();
 		void closeProject(Project* proj);
 		void closeLayer(Layer* layer);
+		void closeAll();
 
 		virtual void EventCallback(SDL_Event e) override;
 	};

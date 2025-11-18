@@ -9,5 +9,6 @@ namespace ulvl::app {
 		virtual void AddCallback() override;
 		bool openDialog(nfdopendialogu8args_t args, std::filesystem::path& outPath);
 		void open();
+		bool canOpen() const;
 	};
 }

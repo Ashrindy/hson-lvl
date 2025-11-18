@@ -19,6 +19,7 @@ namespace ulvl::app {
 		void deselect();
 		void renderGizmo();
 		void save();
+		inline bool canSave() const { return selected; }
 
 		virtual void PreRender() override;
 		virtual void EventCallback(SDL_Event e) override;

@@ -6,8 +6,13 @@
 using namespace ulvl::app;
 namespace fs = std::filesystem;
 
+Template::~Template() {
+	delete hsonTemplate;
+}
+
 Template::Template(const char* templateName) : name{ templateName } {
-	fs::path hsonFile = fs::path{ "templates" } / templateName / "hson.json";
+	fs::path temFolder = rel_to_exe( fs::path{ "templates" } / templateName );
+	fs::path hsonFile = temFolder / "hson.json";
 	hsonTemplate = new hl::set_object_type_database{ hsonFile.wstring().c_str() };
 	objectTree.generateTree(hsonTemplate);
 
@@ -15,14 +20,16 @@ Template::Template(const char* templateName) : name{ templateName } {
 	registerFuncs(squirrelWrap);
 	registerTypes(squirrelWrap);
 
-	fs::path objPath = fs::path{ "templates" } / name / "src";
-	for (auto& file : fs::directory_iterator{ objPath })
-		if (file.path().extension() == ".nut")
-			squirrelWrap.loadFile(file);
+	fs::path objPath = temFolder / "src";
+	if (fs::exists(objPath)) {
+		for (auto& file : fs::directory_iterator{ objPath })
+			if (file.path().extension() == ".nut")
+				squirrelWrap.loadFile(file);
+	}
 }
 
 ModelData Template::getModelData(ObjectService::Object* obj) {
-	fs::path objPath = fs::path{ "templates" } / name / "src";
+	fs::path objPath = rel_to_exe( fs::path{ "templates" } / name / "src" );
 	objPath /= { obj->hson->type + std::string{ ".nut" } };
 	if (!fs::exists(objPath))
 		return {};
@@ -31,12 +38,19 @@ ModelData Template::getModelData(ObjectService::Object* obj) {
 }
 
 void Template::addDebugVisual(ObjectService::Object* obj) {
-	fs::path objPath = fs::path{ "templates" } / name / "src";
+	fs::path objPath = rel_to_exe( fs::path{ "templates" } / name / "src" );
 	objPath /= { obj->hson->type + std::string{ ".nut" } };
 	if (!fs::exists(objPath))
 		return;
 
 	squirrelWrap.callAddDebugVisual(obj);
+}
+
+bool Template::templateExists(const char* name) {
+	if (name == nullptr || strcmp(name, "") == 0) return false;
+
+	fs::path temPath = rel_to_exe( fs::path{ "templates" } / name );
+	return fs::exists(temPath);
 }
 
 void Template::Tree::generateTree(hl::set_object_type_database* hsonTemplate) {
@@ -56,7 +70,7 @@ Template::TreeNode* Template::Tree::getNode(const char* name, const std::vector<
 	TreeNode* node{ nullptr };
 
 	for (auto* node : tree) {
-		if (strcmp(node->name, name) == 0)
+		if (node->name == name)
 			return node;
 
 		if (node->type == Template::TreeNode::NodeType::OBJECT) continue;
@@ -119,7 +133,7 @@ Template::TreeNode* Template::Tree::createNode(const char* path) {
 
 		TreeNode* node{ nullptr };
 		for (auto* child : *lastTree) {
-			if (child->name && name == child->name) {
+			if (child->name.c_str() && name == child->name) {
 				node = child;
 				break;
 			}
@@ -127,7 +141,7 @@ Template::TreeNode* Template::Tree::createNode(const char* path) {
 
 		if (!node) {
 			node = new TreeNode{};
-			node->name = _strdup(name.c_str());
+			node->name = name;
 			node->type = (i == result.size() - 1) ? TreeNode::NodeType::OBJECT : TreeNode::NodeType::CATEGORY;
 			lastTree->push_back(node);
 		}

@@ -10,17 +10,18 @@ namespace ulvl::app {
 				OBJECT
 			};
 
-			const char* name;
+			std::string name;
 			NodeType type;
 			hl::set_object_type* objectType;
 			std::vector<TreeNode*> childNodes;
 
-			~TreeNode() { delete name; }
+			~TreeNode() { for (auto* child : childNodes) delete child; }
 		};
 
 		struct Tree {
 			std::vector<TreeNode*> tree;
 
+			~Tree() { for (auto* node : tree) delete node; }
 			void generateTree(hl::set_object_type_database* hsonTemplate);
 			TreeNode* getNode(const char* name, const std::vector<TreeNode*>& tree);
 			TreeNode* getNode(const char* name);
@@ -33,8 +34,11 @@ namespace ulvl::app {
 		Tree objectTree{};
 		SquirrelWrap squirrelWrap{};
 
+		~Template();
 		Template(const char* templateName);
 		ModelData getModelData(ObjectService::Object* obj);
 		void addDebugVisual(ObjectService::Object* obj);
+
+		static bool templateExists(const char* name);
 	};
 }
