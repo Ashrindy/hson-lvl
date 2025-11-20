@@ -79,7 +79,8 @@ void Template::Tree::generateTree(hl::set_object_type_database* hsonTemplate) {
 		hl::set_object_type& value = it->second;
 
 		std::string path{ value.category + "/" + key };
-		createNode(path.c_str())->objectType = &value;
+		auto* node = createNode(path.c_str());
+		node->objectType = hsonTemplate->get(it->first);
 	}
 }
 

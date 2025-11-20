@@ -60,13 +60,16 @@ namespace ulvl {
 			ImGui::SeparatorText("Parameters");
 
 			auto* hsonTemplate = Application::instance->getService<app::TemplateManager>()->currentTemplate->hsonTemplate;
-			if (selected->hson->instanceOf != hl::guid{ 0 }) {
-				if (changed |= StructEditor(objService->getObject(selected->hson->instanceOf)->hson->parameters, selected->hson->parameters, hsonTemplate->structs[hsonTemplate->operator[](selected->hson->type).structType]))
-					selected->updateModel();
+			auto* objTem = hsonTemplate->get(selected->hson->type);
+			if (objTem->structType != "") {
+				if (selected->hson->instanceOf != hl::guid{ 0 }) {
+					if (changed |= StructEditor(objService->getObject(selected->hson->instanceOf)->hson->parameters, selected->hson->parameters, hsonTemplate->structs[objTem->structType]))
+						selected->updateModel();
+				}
+				else
+					if (changed |= StructEditor(selected->hson->parameters, hsonTemplate->structs[objTem->structType]))
+						selected->updateModel();
 			}
-			else
-				if (changed |= StructEditor(selected->hson->parameters, hsonTemplate->structs[hsonTemplate->operator[](selected->hson->type).structType]))
-					selected->updateModel();
 
 			if (changed) {
 				app->getService<app::ProjectManager>()->setUnsaved(true);

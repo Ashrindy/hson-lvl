@@ -62,6 +62,7 @@ add_executable (${HE_LEVEL_NAME}
     "panels/object-inspector.h"
 	"panels/object-inspector.cpp" 
 	"panels/object-library.h"
+	"panels/object-library.cpp"
 	"panels/viewport.h" 
 	"panels/viewport.cpp"
 	"panels/object-list.h"

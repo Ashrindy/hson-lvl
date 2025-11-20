@@ -1,9 +1,61 @@
 #include "object-list.h"
 #include "../app/project-manager.h"
+#include "../app/template-manager.h"
 #include "../ui/editors/basic.h"
+#include "../utilities/hson.h"
 #include "layer-properties.h"
 
 using namespace ulvl;
+
+void AcceptObjServiceObjectPayload(app::ObjectService::Object* object) {
+	auto* app = Application::instance;
+	const ImGuiPayload* payload{ ImGui::AcceptDragDropPayload("objServiceObject") };
+	if (payload && *(app::ObjectService::Object**)payload->Data) {
+		auto* dropped = *(app::ObjectService::Object**)payload->Data;
+
+		if (dropped->guid != object->hson->parentID) {
+			bool containsChild{ false };
+
+			for (auto* child : object->children)
+				if (child == dropped) {
+					containsChild = true;
+					break;
+				}
+
+			auto* oldParent = dropped->getParent();
+
+			if (containsChild)
+				dropped->hson->parentID = object->hson->parentID;
+			else
+				dropped->hson->parentID = object->guid;
+
+			object->updateChildren();
+			if (object->hasParent())
+				object->getParent()->updateChildren();
+			if (oldParent)
+				oldParent->updateChildren();
+			dropped->updateModelMat();
+			app->getService<app::ProjectManager>()->setUnsaved(true);
+		}
+	}
+}
+
+void AcceptHsonTemObjectPayload(app::ObjectService::Object* object) {
+	auto* app = Application::instance;
+	auto* objectService = app->getService<app::ObjectService>();
+	auto* tem = app->getService<app::TemplateManager>()->currentTemplate;
+	const ImGuiPayload* payload{ ImGui::AcceptDragDropPayload("hsonTemObj") };
+	if (payload && *(app::Template::TreeNode**)payload->Data) {
+		auto* dropped = *(app::Template::TreeNode**)payload->Data;
+
+		auto* obj = objectService->createObject(object->owner, dropped->name, dropped->objectType);
+		auto* hsonObj = obj->hson;
+		hsonObj->name = hsonObj->type + std::to_string(objectService->getObjectNameId(hsonObj->type) - 1);
+		hsonObj->parentID = object->guid;
+		object->updateChildren();
+		app->getService<app::ProjectManager>()->setUnsaved(true);
+	}
+}
 
 void RenderObject(app::ObjectService::Object* object) {
 	auto* app = Application::instance;
@@ -36,35 +88,8 @@ void RenderObject(app::ObjectService::Object* object) {
 	}
 
 	if (ImGui::BeginDragDropTarget()) {
-		const ImGuiPayload* payload{ ImGui::AcceptDragDropPayload("objServiceObject") };
-		if (payload && *(app::ObjectService::Object**)payload->Data) {
-			auto* dropped = *(app::ObjectService::Object**)payload->Data;
-
-			if (dropped->guid != object->hson->parentID) {
-				bool containsChild{ false };
-
-				for (auto* child : object->children)
-					if (child == dropped) {
-						containsChild = true;
-						break;
-					}
-
-				auto* oldParent = dropped->getParent();
-
-				if (containsChild)
-					dropped->hson->parentID = object->hson->parentID;
-				else
-					dropped->hson->parentID = object->guid;
-
-				object->updateChildren();
-				if (object->hasParent())
-					object->getParent()->updateChildren();
-				if (oldParent)
-					oldParent->updateChildren();
-				dropped->updateModelMat();
-				app->getService<app::ProjectManager>()->setUnsaved(true);
-			}
-		}
+		AcceptObjServiceObjectPayload(object);
+		AcceptHsonTemObjectPayload(object);
 
 		ImGui::EndDragDropTarget();
 	}
@@ -109,6 +134,24 @@ void RenderObject(app::ObjectService::Object* object) {
 	}
 
 	ImGui::PopID();
+}
+
+void AcceptHsonTemObjectPayload(app::ProjectManager::Layer* layer) {
+	auto* app = Application::instance;
+	auto* objectService = app->getService<app::ObjectService>();
+	auto* tem = app->getService<app::TemplateManager>()->currentTemplate;
+	const ImGuiPayload* payload{ ImGui::AcceptDragDropPayload("hsonTemObj") };
+	if (payload && *(app::Template::TreeNode**)payload->Data) {
+		auto* dropped = *(app::Template::TreeNode**)payload->Data;
+
+		auto* obj = objectService->createObject(layer->hson, dropped->name, dropped->objectType);
+		auto* hsonObj = obj->hson;
+		hsonObj->name = hsonObj->type + std::to_string(objectService->getObjectNameId(hsonObj->type) - 1);
+		auto* cam = app->graphics->camera;
+		auto pos = cam->position + cam->front();
+		obj->setPosition(pos);
+		app->getService<app::ProjectManager>()->setUnsaved(true);
+	}
 }
 
 void RenderLayer(app::ProjectManager::Layer* layer) {
@@ -174,6 +217,12 @@ void RenderLayer(app::ProjectManager::Layer* layer) {
 		}
 
 		ImGui::EndPopup();
+	}
+
+	if (ImGui::BeginDragDropTarget()) {
+		AcceptHsonTemObjectPayload(layer);
+
+		ImGui::EndDragDropTarget();
 	}
 
 	if (isOpen) {

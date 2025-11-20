@@ -58,5 +58,6 @@ namespace ulvl::app {
 		Object* createObject(hl::hson::project* proj);
 		Object* createObject(hl::hson::project* proj, std::string& typeName, hl::set_object_type* type);
 		Object* createInstanceOf(hl::hson::project* proj, const hl::guid& baseObj);
+		size_t getObjectNameId(const std::string& type) const;
 	};
 }

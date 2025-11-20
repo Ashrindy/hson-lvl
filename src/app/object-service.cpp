@@ -298,7 +298,8 @@ ObjectService::Object* ObjectService::createObject(hl::hson::project* proj, std:
     auto* hson = obj->hson;
 
     hson->type = typeName;
-    hson->parameters = ut::createStruct(tem->structs[type->structType]);
+    if (type->structType != "")
+        hson->parameters = ut::createStruct(tem->structs[type->structType]);
 
     return obj;
 }
@@ -307,4 +308,13 @@ ObjectService::Object* ObjectService::createInstanceOf(hl::hson::project* proj, 
     auto* obj = createObject(proj);
     obj->hson->instanceOf = baseObj;
     return obj;
+}
+
+size_t ObjectService::getObjectNameId(const std::string& type) const {
+    size_t id{ 0 };
+    for (auto* obj : objects)
+        if (obj->hson->type == type)
+            id++;
+
+    return id;
 }
