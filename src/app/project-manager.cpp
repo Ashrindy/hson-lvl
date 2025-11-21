@@ -79,6 +79,10 @@ ProjectManager::Layer* ProjectManager::getLayer(const hl::hson::project* project
 		if (auto* layer = proj->getLayer(project))
 			return layer;
 
+	for (auto* layer : layers)
+		if (layer->hson == project)
+			return layer;
+
 	return nullptr;
 }
 

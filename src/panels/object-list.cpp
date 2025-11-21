@@ -1,6 +1,7 @@
 #include "object-list.h"
 #include "../app/project-manager.h"
 #include "../app/template-manager.h"
+#include "../app/cleaner-service.h"
 #include "../ui/editors/basic.h"
 #include "../utilities/hson.h"
 #include "layer-properties.h"
@@ -64,7 +65,6 @@ void RenderObject(app::ObjectService::Object* object) {
 	ImGui::PushID(object);
 	auto nameStr = object->getDisplayName();
 	const char* objectName = nameStr.c_str();
-	bool hasBeenDeleted{ false };
 
 	ImGuiTreeNodeFlags treeFlags{ ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick };
 
@@ -118,17 +118,15 @@ void RenderObject(app::ObjectService::Object* object) {
 		}
 
 		if (ImGui::MenuItem("Remove")) {
-			objectService->removeObject(object);
-			hasBeenDeleted = true;
+			app->getService<app::CleanerService>()->deleteObject(object);
 		}
 
 		ImGui::EndPopup();
 	}
 
 	if (isOpen) {
-		if (!hasBeenDeleted)
-			for (auto* child : object->children)
-				RenderObject(child);
+		for (auto* child : object->children)
+			RenderObject(child);
 
 		ImGui::TreePop();
 	}

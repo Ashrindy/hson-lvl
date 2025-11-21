@@ -26,11 +26,16 @@ ObjectService::Object::Object(const hl::guid& guid, hl::hson::object* object, hl
 ObjectService::Object::~Object() {
     auto* app = Application::instance;
     auto* objService = app->getService<ObjectService>();
+    auto* cleanerService = app->getService<CleanerService>();
 
     for (auto* child : children)
         objService->removeObject(child);
 
-    Application::instance->getService<CleanerService>()->deleteModel(model);
+    auto instances = getInstances();
+    for (auto* instance : instances)
+        objService->removeObject(instance);
+
+    cleanerService->deleteModel(model);
 }
 
 void ObjectService::Object::setPosition(const glm::vec3& pos) {
@@ -168,6 +173,19 @@ void ObjectService::Object::updateChildren() {
             children.push_back(obj);
 }
 
+std::vector<ObjectService::Object*> ObjectService::Object::getInstances() const
+{
+    std::vector<ObjectService::Object*> instances;
+
+    auto* objService = Application::instance->getService<ObjectService>();
+
+    for (auto* obj : objService->objects)
+        if (obj->hson->instanceOf == guid)
+            instances.push_back(obj);
+
+    return instances;
+}
+
 void ObjectService::Object::updateModel() {
 
     ModelData modelData = Application::instance->getService<TemplateManager>()->currentTemplate->getModelData(this);
@@ -242,15 +260,15 @@ void ObjectService::removeObject(Object* object, bool removeFromLayer) {
 
     if (object->owner) {
         // TODO: Find a proper way to remove from hl::ordered_maps
-        hl::ordered_map<hl::guid, hl::hson::object>& objs{ object->owner->objects };
+        hl::ordered_map<hl::guid, hl::hson::object>* hsonObjs{ &object->owner->objects };
         int idx{ 0 };
-        for (auto it = objs.begin(); it != objs.end(); ++it) {
+        for (auto it = hsonObjs->begin(); it != hsonObjs->end(); ++it) {
             if (it->first == object->guid)
                 break;
             idx++;
         }
 
-        objs.erase(objs.begin() + idx);
+        hsonObjs->erase(hsonObjs->begin() + idx);
 
         if (removeFromLayer) {
             auto* projMgr = app->getService<ProjectManager>();

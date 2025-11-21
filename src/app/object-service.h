@@ -35,6 +35,7 @@ namespace ulvl::app {
 			bool hasParent() const;
 			bool hasChildren() const;
 			void updateChildren();
+			std::vector<Object*> getInstances() const;
 			inline const std::string getDisplayName() const {
 				if (hson->name.has_value())
 					return hson->name.value();

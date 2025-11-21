@@ -12,6 +12,10 @@ void CleanerService::deleteModel(gfx::BaseModel* model) {
 	modelsForDeletion.push_back(model);
 }
 
+void CleanerService::deleteObject(ObjectService::Object* obj) {
+	objectsForDeletion.push_back(obj);
+}
+
 void CleanerService::deleteAll() {
 	auto& models = gfx::Graphics::instance->models;
 	for (auto* model : modelsForDeletion) {
@@ -20,4 +24,10 @@ void CleanerService::deleteAll() {
 		delete model;
 	}
 	modelsForDeletion.clear();
+
+	auto* objService = Application::instance->getService<ObjectService>();
+	for (auto* obj : objectsForDeletion) {
+		objService->removeObject(obj);
+	}
+	objectsForDeletion.clear();
 }
