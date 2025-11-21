@@ -10,6 +10,10 @@
 
 #include <ImGuizmo.h>
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 using namespace ulvl::gfx;
 
 Graphics* Graphics::instance = nullptr;
@@ -160,6 +164,20 @@ void Graphics::setUnsaved(bool unsaved) {
         SDL_SetWindowTitle(window, name);
 }
 
+float Graphics::getDpiScale(SDL_Window* window) {
+#ifdef WIN32
+	HWND hwnd = (HWND)SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+	if (hwnd) {
+		auto dpi = GetDpiForWindow(hwnd);
+		float scale = dpi / 96.0f;
+		return scale;
+	}
+	return 1.0f;
+#elif
+	return 1.0f;
+#endif
+}
+
 bool Graphics::init() {
     if (!SDL_Init(SDL_INIT_VIDEO))
         LOGB("SDL: Failed to init SDL!");
@@ -197,7 +215,11 @@ bool Graphics::init() {
     };
     ImGui_ImplPlume_Init(initInfo);
 
-    io.Fonts->AddFontFromMemoryCompressedTTF((void*)InterFont_compressed_data, InterFont_compressed_size, 14);
+    auto dpiScale = getDpiScale(window);    
+    io.Fonts->AddFontFromMemoryCompressedTTF((void*)InterFont_compressed_data, InterFont_compressed_size, 14 * dpiScale);
+
+    // TODO: move this elsewhere if any custom style is implemented
+    ImGui::GetStyle().ScaleAllSizes(dpiScale);
 
     // TODO: Find better font, NotoSansJP is really big and doesn't support all needed characters
 

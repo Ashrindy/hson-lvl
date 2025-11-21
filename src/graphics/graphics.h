@@ -48,6 +48,7 @@ namespace ulvl::gfx {
 		void reposScreen(unsigned int x, unsigned int y);
 		void initializeRenderResources();
 		void setUnsaved(bool unsaved);
+		float getDpiScale(SDL_Window* window);
 
 		SDL_Window* window;
 		unsigned int width{ 1280 }, height{ 720 };
