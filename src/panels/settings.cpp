@@ -11,6 +11,9 @@ void SettingsPanel::RenderPanel() {
 	auto* settingsMgr = app->getService<app::SettingsManager>();
 	auto& settings = settingsMgr->settings;
 
+	if (!std::filesystem::exists("templates"))
+		std::filesystem::create_directory("templates");
+
 	if (ImGui::BeginCombo("Template", settings.selectedTemplateName.c_str())) {
 		for (auto& path : std::filesystem::directory_iterator{ "templates" }) {
 			auto temName = path.path().stem().string();
