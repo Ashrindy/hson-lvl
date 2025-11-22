@@ -40,6 +40,7 @@ A wrapper for `hl::radix_tree<hl::hson::parameter>`.
 A wrapper for `ulvl::app::ObjectService::Object`.
 #### Functions
 - `position()` - get the world position of the object (returns the custom [Vec3](#vec3) class)
+- `rotation()` - get the rotation of the object (returns the custom [Vec4](#vec4) class)
 - `localPosition()` - get the local position of the object (returns the custom [Vec3](#vec3) class)
 - `name()` - get the name of the object (returns the custom [String](#string) class)
 - `parameters()` - get the parameters of the object (returns the custom [Parameters](#parameters) class)
