@@ -83,7 +83,7 @@ add_executable (${HE_LEVEL_NAME}
 
 	"utilities/hson.h" 
 	"utilities/hson.cpp"
-)
+ "graphics/shaders/color_vs.h")
 
 target_precompile_headers(${HE_LEVEL_NAME} PRIVATE "pch.h")
 

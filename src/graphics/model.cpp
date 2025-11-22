@@ -24,12 +24,12 @@ void Model::updateAabb() {
     }
 }
 
-Model::Model() : BaseModel{} {
-    init();
+Model::Model(ModelDesc desc) : BaseModel{ desc } {
+    init(desc);
 }
 
-void Model::init() {
-    BaseModel::init();
+void Model::init(ModelDesc desc) {
+    BaseModel::init(desc);
     
     updateWorldMatrix();
     updateAabb();
@@ -72,7 +72,10 @@ void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices
 
     int indexOffset = this->indices.size();
 	int vertexOffset = vertexCount;
-	meshes.emplace_back(indexOffset, icount, texture);
+    unsigned int indexC{ icount };
+    if (!indices)
+        indexC = vcount;
+	meshes.emplace_back(indexOffset, indexC, texture);
 
     char* newVerts = new char[(vertexCount + vcount) * vertexStride];
     if (this->vertices) {
@@ -84,12 +87,14 @@ void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices
     
     vertexCount += vcount;
 
-	this->indices.insert(this->indices.end(), indices, indices + icount);
+    if (indices) {
+        this->indices.insert(this->indices.end(), indices, indices + icount);
 
-	for (int x = 0; x < icount; x++) {
-		auto& y = this->indices[indexOffset + x];
-		y += vertexOffset;
-	}
+        for (int x = 0; x < icount; x++) {
+            auto& y = this->indices[indexOffset + x];
+            y += vertexOffset;
+        }
+    }
 
     unsigned int verticesSize = vertexCount * vertexStride;
     vertexBuffer = ctx.device->createBuffer(plume::RenderBufferDesc::VertexBuffer(verticesSize, plume::RenderHeapType::UPLOAD));
@@ -100,13 +105,14 @@ void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices
     vertexBufferView.clear();
     vertexBufferView.emplace_back(plume::RenderBufferReference{ vertexBuffer.get() }, verticesSize);
 
-    unsigned int indicesSize = this->indices.size() * sizeof(unsigned short);
-    indexBuffer = ctx.device->createBuffer(plume::RenderBufferDesc::IndexBuffer(indicesSize, plume::RenderHeapType::UPLOAD));
-    bufferData = indexBuffer->map();
-    memcpy(bufferData, this->indices.data(), indicesSize);
-    indexBuffer->unmap();
-
-    indexBufferView = plume::RenderIndexBufferView{ { indexBuffer.get() }, indicesSize, plume::RenderFormat::R16_UINT };
+    if (indices) {
+        unsigned int indicesSize = this->indices.size() * sizeof(unsigned short);
+        indexBuffer = ctx.device->createBuffer(plume::RenderBufferDesc::IndexBuffer(indicesSize, plume::RenderHeapType::UPLOAD));
+        bufferData = indexBuffer->map();
+        memcpy(bufferData, this->indices.data(), indicesSize);
+        indexBuffer->unmap();
+        indexBufferView = plume::RenderIndexBufferView{ { indexBuffer.get() }, indicesSize, plume::RenderFormat::R16_UINT };
+    }
 
     updateAabb();
 }
@@ -128,14 +134,22 @@ void Model::render() {
     ctx.commandList->setGraphicsPipelineLayout(pipelineLayout.get());
     ctx.commandList->setPipeline(pipeline.get());
     ctx.commandList->setVertexBuffers(0, vertexBufferView.data(), vertexBufferView.size(), inputSlots.data());
-    ctx.commandList->setIndexBuffer(&indexBufferView);
+    if (indexBuffer)
+        ctx.commandList->setIndexBuffer(&indexBufferView);
 
     ctx.commandList->setGraphicsPushConstants(0, &worldMatrix, 0, sizeof(glm::mat4));
 
     descriptor->setBuffer(0, ctx.mainCBuffer.get(), sizeof(MainCBuffer));
     ctx.commandList->setGraphicsDescriptorSet(descriptor.get(), 0);
 
-	for (auto& mesh : meshes) {
-        ctx.commandList->drawIndexedInstanced(mesh.indexCount, 1, mesh.indexOffset, 0, 0);
-	}
+    if (indexBuffer) {
+        for (auto& mesh : meshes) {
+            ctx.commandList->drawIndexedInstanced(mesh.indexCount, 1, mesh.indexOffset, 0, 0);
+        }
+    }
+    else {
+        for (auto& mesh : meshes) {
+            ctx.commandList->drawInstanced(mesh.indexCount, 1, mesh.indexOffset, 0);
+        }
+    }
 }

@@ -1,5 +1,7 @@
 #include "debug-visual-service.h"
 #include "../graphics/graphics.h"
+#include "../graphics/shaders/color_vs.h"
+#include "../graphics/shaders/color_ps.h"
 #include "../app.h"
 #include "cleaner-service.h"
 #include <numbers>
@@ -228,8 +230,49 @@ void DebugVisualService::addCylinder(gfx::InstancedMesh mesh) {
     cylinder->addMesh(mesh);
 }
 
+void DebugVisualService::addLine(LineDesc& mesh) {
+    gfx::BaseModel::ModelDesc modelDesc{
+        .primitiveTopo = plume::RenderPrimitiveTopology::LINE_LIST,
+        .vertexShader = color_vs_shader,
+        .vertexShaderSize = sizeof(color_vs_shader),
+        .pixelShader = color_ps_shader,
+        .pixelShaderSize = sizeof(color_ps_shader),
+        .vertexLayout = {
+            { "POSITION", 0, 0, plume::RenderFormat::R32G32B32_FLOAT,    0, 0                 },
+            { "COLOR",    0, 1, plume::RenderFormat::R32G32B32A32_FLOAT, 0, sizeof(float) * 3 }
+        },
+        .vertexStride = sizeof(gfx::ColorVertex)
+    };
+    gfx::Model* model = new gfx::Model{ modelDesc };
+    gfx::ColorVertex* vertices = new gfx::ColorVertex[mesh.positions.size()];
+    for (auto x = 0; x < mesh.positions.size(); x++) {
+        vertices[x].position = mesh.positions[x];
+        vertices[x].color = mesh.color;
+    }
+    model->addMesh(vertices, mesh.positions.size(), nullptr, 0, nullptr);
+    delete[] vertices;
+    model->setWorldMatrix(mesh.worldTransform);
+
+    gfx::Graphics::instance->models.push_back(model);
+    lines.emplace_back(mesh.id, std::move(model));
+}
+
 void DebugVisualService::removeMeshes(int id) {
     cube->removeMeshes(id);
     sphere->removeMeshes(id);
     cylinder->removeMeshes(id);
+
+    std::vector<int> indicesToRemove{};
+    for (auto x = 0; x < lines.size(); x++)
+        if (lines[x].id == id) {
+            auto& line = lines[x];
+            line.model->clearMeshes();
+            auto& models = gfx::Graphics::instance->models;
+            models.erase(std::remove(models.begin(), models.end(), line.model));
+            delete line.model;
+            indicesToRemove.push_back(x);
+        }
+
+    for (auto index : indicesToRemove)
+        lines.erase(lines.begin() + index);
 }

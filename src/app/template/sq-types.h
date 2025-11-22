@@ -81,6 +81,7 @@ namespace ulvl::app {
 			NEW_FUNC("DrawCube", DebugVisualDrawCube)
 			NEW_FUNC("DrawSphere", DebugVisualDrawSphere)
 			NEW_FUNC("DrawCylinder", DebugVisualDrawCylinder)
+			NEW_FUNC("DrawLine", DebugVisualDrawLine)
 		);
 	}
 }

@@ -5,8 +5,8 @@
 
 using namespace ulvl::gfx;
 
-InstancedModel::InstancedModel() : BaseModel{} {
-    init();
+InstancedModel::InstancedModel(ModelDesc desc) : BaseModel{ desc } {
+    init(desc);
 }
 
 void InstancedModel::updateInstanceBuffer() {
@@ -81,7 +81,7 @@ void InstancedModel::clearMeshes() {
     updateInstanceBuffer();
 }
 
-void InstancedModel::init() {
+void InstancedModel::init(ModelDesc desc) {
     vertexStride = sizeof(PosVertex);
 
     auto* graphics = Graphics::instance;
@@ -143,7 +143,7 @@ void InstancedModel::init() {
     pipelineDesc.renderTargetFormat[0] = plume::RenderFormat::B8G8R8A8_UNORM;
     pipelineDesc.renderTargetBlend[0] = plume::RenderBlendDesc::AlphaBlend();
     pipelineDesc.renderTargetCount = 1;
-    pipelineDesc.primitiveTopology = plume::RenderPrimitiveTopology::TRIANGLE_LIST;
+    pipelineDesc.primitiveTopology = desc.primitiveTopo;
     pipelineDesc.cullMode = plume::RenderCullMode::BACK;
 
     pipelineDesc.depthEnabled = true;

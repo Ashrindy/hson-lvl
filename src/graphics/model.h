@@ -25,9 +25,9 @@ namespace ulvl::gfx {
 		void updateWorldMatrix();
 		void updateAabb();
 	public:
-		Model();
+		Model(ModelDesc desc = {});
 
-		virtual void init() override;
+		virtual void init(ModelDesc desc) override;
 		virtual void shutdown() override;
 
 		void setPosition(const glm::vec3& pos);

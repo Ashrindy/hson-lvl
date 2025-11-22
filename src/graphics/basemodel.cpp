@@ -5,13 +5,14 @@
 
 using namespace ulvl::gfx;
 
-BaseModel::BaseModel() {
-    init();
+BaseModel::BaseModel(ModelDesc desc) {
+    init(desc);
 }
 
-void BaseModel::init() {
+void BaseModel::init(ModelDesc desc) {
     auto* graphics = Graphics::instance;
     auto& ctx = graphics->renderCtx;
+    vertexStride = desc.vertexStride;
 
     plume::RenderDescriptorRange range{};
     range.type = plume::RenderDescriptorRangeType::CONSTANT_BUFFER;
@@ -47,8 +48,14 @@ void BaseModel::init() {
 
     switch (shaderFormat) {
     case plume::RenderShaderFormat::SPIRV:
-        vertexShader = ctx.device->createShader(vs_shader, sizeof(vs_shader), "main", shaderFormat);
-        fragmentShader = ctx.device->createShader(ps_color_shader, sizeof(ps_color_shader), "main", shaderFormat);
+        if (desc.vertexShader)
+            vertexShader = ctx.device->createShader(desc.vertexShader, desc.vertexShaderSize, "main", shaderFormat);
+        else
+            vertexShader = ctx.device->createShader(vs_shader, sizeof(vs_shader), "main", shaderFormat);
+        if (desc.pixelShader)
+            fragmentShader = ctx.device->createShader(desc.pixelShader, desc.pixelShaderSize, "main", shaderFormat);
+        else
+            fragmentShader = ctx.device->createShader(ps_color_shader, sizeof(ps_color_shader), "main", shaderFormat);
         break;
     default:
         assert(false && "Unknown shader format");
@@ -56,10 +63,7 @@ void BaseModel::init() {
 
     inputSlots.emplace_back(0, vertexStride);
 
-    vertexLayout = {
-        { "POSITION", 0, 0, plume::RenderFormat::R32G32B32_FLOAT, 0, 0                 },
-        { "TEXCOORD", 0, 1, plume::RenderFormat::R32G32_FLOAT,    0, sizeof(float) * 3 }
-    };
+    vertexLayout = desc.vertexLayout;
 
     plume::RenderGraphicsPipelineDesc pipelineDesc{};
     pipelineDesc.inputSlots = inputSlots.data();
@@ -72,7 +76,7 @@ void BaseModel::init() {
     pipelineDesc.renderTargetFormat[0] = plume::RenderFormat::B8G8R8A8_UNORM;
     pipelineDesc.renderTargetBlend[0] = plume::RenderBlendDesc::Copy();
     pipelineDesc.renderTargetCount = 1;
-    pipelineDesc.primitiveTopology = plume::RenderPrimitiveTopology::TRIANGLE_LIST;
+    pipelineDesc.primitiveTopology = desc.primitiveTopo;
     pipelineDesc.depthEnabled = true;
     pipelineDesc.depthFunction = plume::RenderComparisonFunction::LESS;
     pipelineDesc.depthWriteEnabled = true;

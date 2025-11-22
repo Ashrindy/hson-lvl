@@ -4,10 +4,17 @@
 #include <glm/ext/quaternion_float.hpp>
 #include <plume_render_interface.h>
 
+// TODO: Refactor entire model system to be more universal
+
 namespace ulvl::gfx {
 	struct BaseVertex {
 		glm::vec3 position;
 		glm::vec2 texcoord;
+	};
+
+	struct ColorVertex {
+		glm::vec3 position;
+		glm::vec4 color;
 	};
 
 	class BaseModel {
@@ -29,9 +36,22 @@ namespace ulvl::gfx {
 		unsigned int vertexStride{ sizeof(BaseVertex) };
 		bool visible{ true };
 	public:
-		BaseModel();
+		struct ModelDesc {
+			plume::RenderPrimitiveTopology primitiveTopo{ plume::RenderPrimitiveTopology::TRIANGLE_LIST };
+			const unsigned char* vertexShader{ nullptr };
+			size_t vertexShaderSize{ 0 };
+			const unsigned char* pixelShader{ nullptr };
+			size_t pixelShaderSize{ 0 };
+			std::vector<plume::RenderInputElement> vertexLayout{
+				{ "POSITION", 0, 0, plume::RenderFormat::R32G32B32_FLOAT, 0, 0                 },
+				{ "TEXCOORD", 0, 1, plume::RenderFormat::R32G32_FLOAT,    0, sizeof(float) * 3 }
+			};
+			size_t vertexStride{ sizeof(BaseVertex) };
+		};
 
-		virtual void init();
+		BaseModel(ModelDesc desc = {});
+
+		virtual void init(ModelDesc desc);
 		virtual void shutdown();
 
 		inline void setVisibility(bool visible) {

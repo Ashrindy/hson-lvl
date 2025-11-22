@@ -23,7 +23,7 @@ namespace ulvl::gfx {
 		std::vector<InstancedMesh> meshes;
 		std::unique_ptr<plume::RenderBuffer> instanceBuffer;
 	public:
-		InstancedModel();
+		InstancedModel(ModelDesc desc = {});
 
 		void updateInstanceBuffer();
 		void setModel(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount);
@@ -31,7 +31,7 @@ namespace ulvl::gfx {
 		void removeMeshes(int id);
 		void clearMeshes();
 
-		virtual void init() override;
+		virtual void init(ModelDesc desc) override;
 		virtual void render() override;
 		virtual void shutdown() override;
 	};

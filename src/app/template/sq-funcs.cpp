@@ -620,3 +620,43 @@ SQInteger ulvl::app::DebugVisualDrawCylinder(HSQUIRRELVM vm) {
 
 	return 0;
 }
+
+SQInteger ulvl::app::DebugVisualDrawLine(HSQUIRRELVM vm) {
+	DebugVisualService* debugVisual{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&debugVisual, nullptr, SQFalse);
+
+	glm::vec4* color{};
+	sq_getinstanceup(vm, 2, (SQUserPointer*)&color, nullptr, SQFalse);
+
+	glm::vec3* pos{};
+	sq_getinstanceup(vm, 3, (SQUserPointer*)&pos, nullptr, SQFalse);
+
+	glm::vec4* rot{};
+	sq_getinstanceup(vm, 4, (SQUserPointer*)&rot, nullptr, SQFalse);
+
+	HSQOBJECT positions;
+	sq_resetobject(&positions);
+	sq_getstackobj(vm, 5, &positions);
+	SQInteger posLen = sq_getsize(vm, 5);
+	std::vector<glm::vec3> glmPos{};
+	for (auto x = 0; x < posLen; x++) {
+		sq_pushinteger(vm, x);
+		if (SQ_SUCCEEDED(sq_get(vm, 5))) {
+			glm::vec3* pos{};
+			sq_getinstanceup(vm, -1, (SQUserPointer*)&pos, nullptr, SQFalse);
+			glmPos.push_back(*pos);
+		}
+	}
+
+	ObjectService::Object* object{};
+	sq_getinstanceup(vm, 6, (SQUserPointer*)&object, nullptr, SQFalse);
+
+	app::DebugVisualService::LineDesc mesh{};
+	mesh.id = (int)object;
+	mesh.positions = std::move(glmPos);
+	mesh.worldTransform = glm::translate(glm::mat4{ 1 }, *pos) * glm::toMat4(*(glm::quat*)rot);
+	mesh.color = *color;
+	debugVisual->addLine(mesh);
+
+	return 0;
+}

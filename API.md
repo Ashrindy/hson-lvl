@@ -65,6 +65,7 @@ A class used for adding debug visuals to the scene.
 - `DrawCube(Vec4 color, Vec3 position, Vec4 rotation, Vec3 scale, Object obj)` - adds a cube debug visual
 - `DrawSphere(Vec4 color, Vec3 position, float radius, Object obj)` - adds a sphere debug visual
 - `DrawCylinder(Vec4 color, Vec3 position, Vec4 rotation, float radius, float height, Object obj)` - adds a cylinder debug visual
+- `DrawLine(Vec4 color, Vec3 position, Vec4 rotation, Vec3[] positions, Object obj)` - adds a line debug visual (positions are arrays of two, start + end, over and over again)
 
 ## Global Functions
 - `GetObjByID(string guid)` - get an object by its guid (returns the custom [Object](#object) class)
