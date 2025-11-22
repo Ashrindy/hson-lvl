@@ -200,7 +200,7 @@ bool ObjectInspector::ParamEditor(const char* name, hl::hson::parameter& param, 
 		break;
 	}
 
-	if (ImGui::BeginItemTooltip()) {
+	if (fieldDef.descriptions.size() > 0 && ImGui::BeginItemTooltip()) {
 		for (auto desc : fieldDef.descriptions) {
 			ImGui::Text("%s: %s", desc.first, desc.second);
 		}
