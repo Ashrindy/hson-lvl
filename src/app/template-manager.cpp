@@ -32,6 +32,9 @@ void TemplateManager::loadTemplate(const char* templateName) {
 void TemplateManager::reloadAll() {
 	for (auto* temp : templates)
 		temp->reloadScripts();
+	auto* objService = Application::instance->getService<ObjectService>();
+	for (auto* obj : objService->objects)
+		obj->updateDebugVisual();
 }
 
 void TemplateManager::deloadTemplates() {
