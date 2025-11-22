@@ -9,10 +9,14 @@ using namespace ulvl;
 void SettingsPanel::RenderPanel() {
 	auto* app = Application::instance;
 	auto* settingsMgr = app->getService<app::SettingsManager>();
+	auto* projMgr = app->getService<app::ProjectManager>();
 	auto& settings = settingsMgr->settings;
 
 	if (!std::filesystem::exists("templates"))
 		std::filesystem::create_directory("templates");
+
+	if (projMgr->layers.size() > 0 || projMgr->projects.size() > 0)
+		ImGui::BeginDisabled();
 
 	if (ImGui::BeginCombo("Template", settings.selectedTemplateName.c_str())) {
 		for (auto& path : std::filesystem::directory_iterator{ "templates" }) {
@@ -34,5 +38,10 @@ void SettingsPanel::RenderPanel() {
 		}
 
 		ImGui::EndCombo();
+	}
+
+	if (projMgr->layers.size() > 0 || projMgr->projects.size() > 0) {
+		ImGui::EndDisabled();
+		ImGui::SetItemTooltip("Can't switch between templates while a HSON is loaded.");
 	}
 }
