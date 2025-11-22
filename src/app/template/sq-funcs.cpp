@@ -269,7 +269,7 @@ SQInteger ulvl::app::GetObjRotation(HSQUIRRELVM vm) {
 	sq_get(vm, -2);
 	sq_createinstance(vm, -1);
 	glm::quat rot = self->getQuaternion();
-	glm::vec4* copy = new glm::vec4(rot.w, rot.x, rot.y, rot.z);
+	glm::vec4* copy = new glm::vec4(rot.x, rot.y, rot.z, rot.w);
 	sq_setinstanceup(vm, -1, copy);
 	sq_setreleasehook(vm, -1, Vec4ReleaseHook);
 	return 1;
