@@ -24,6 +24,7 @@ add_executable (${HE_LEVEL_NAME}
 	"graphics/shaders/vs_matless.h"  
 	"graphics/shaders/instance_vs.h"
 	"graphics/shaders/color_ps.h"
+	"graphics/shaders/color_vs.h"
 
 	"math/aabb.h"
 	"math/ray.h"
@@ -83,7 +84,7 @@ add_executable (${HE_LEVEL_NAME}
 
 	"utilities/hson.h" 
 	"utilities/hson.cpp"
- "graphics/shaders/color_vs.h")
+)
 
 target_precompile_headers(${HE_LEVEL_NAME} PRIVATE "pch.h")
 

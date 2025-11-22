@@ -402,8 +402,9 @@ SQInteger ulvl::app::Vec3GetZ(HSQUIRRELVM vm) {
 
 	return 1;
 }
+
 SQInteger ulvl::app::Vec3RotateByQuat(HSQUIRRELVM vm) {
-	//Easier to do it this way than remake it in squirrel
+	// Easier to do it this way than remake it in squirrel
 
 	glm::vec3* vec;
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&vec, 0, SQFalse);
