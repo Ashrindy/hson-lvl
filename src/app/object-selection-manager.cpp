@@ -59,7 +59,7 @@ void ObjectSelectionManager::renderGizmo() {
 	projMatrix[1][1] *= -1.0f;
 
 	updateMatrix();
-	if (ImGuizmo::Manipulate((const float*)&viewMatrix, (const float*)&projMatrix, ImGuizmo::OPERATION::TRANSLATE | ImGuizmo::OPERATION::ROTATE, ImGuizmo::MODE::WORLD, (float*)&objectMatrix))
+	if (ImGuizmo::Manipulate((const float*)&viewMatrix, (const float*)&projMatrix, ImGuizmo::OPERATION::TRANSLATE | ImGuizmo::OPERATION::ROTATE, ImGuizmo::MODE::LOCAL, (float*)&objectMatrix))
 		updateObject();
 }
 

@@ -39,7 +39,7 @@ ObjectService::Object::~Object() {
 }
 
 void ObjectService::Object::setPosition(const glm::vec3& pos) {
-    hson->position = { -pos.x, pos.y, pos.z };
+    hson->position = { pos.x, pos.y, -pos.z };
 
     model->setPosition(pos);
 
@@ -47,7 +47,7 @@ void ObjectService::Object::setPosition(const glm::vec3& pos) {
 }
 
 void ObjectService::Object::setLocalPosition(const glm::vec3& pos) {
-    hson->position = { -pos.x, pos.y, pos.z };
+    hson->position = { pos.x, pos.y, -pos.z };
 
     if (hasParent()) {
         model->setPosition(getWorldMatrix()[3]);
@@ -60,7 +60,7 @@ void ObjectService::Object::setLocalPosition(const glm::vec3& pos) {
 
 void ObjectService::Object::setLocalRotation(const glm::vec3& rot) {
     auto quat = glm::quat{ rot };
-    hson->rotation = { -quat.x, -quat.y, -quat.z, quat.w };
+    hson->rotation = { -quat.x, -quat.y, quat.z, quat.w };
 
     if (hasParent()) {
         auto worldMatrix = getWorldMatrix();
@@ -73,7 +73,7 @@ void ObjectService::Object::setLocalRotation(const glm::vec3& rot) {
 }
 
 void ObjectService::Object::setLocalQuaternion(const glm::quat& rot) {
-    hson->rotation = { -rot.x, -rot.y, -rot.z, rot.w };
+    hson->rotation = { -rot.x, -rot.y, rot.z, rot.w };
 
     if (hasParent()) {
         auto worldMatrix = getWorldMatrix();
@@ -87,7 +87,7 @@ void ObjectService::Object::setLocalQuaternion(const glm::quat& rot) {
 
 void ObjectService::Object::setRotation(const glm::vec3& rot) {
     auto quat = glm::quat{ rot };
-    hson->rotation = { -quat.x, -quat.y, -quat.z, quat.w };
+    hson->rotation = { -quat.x, -quat.y, quat.z, quat.w };
 
     model->setRotation(rot);
 
@@ -95,7 +95,7 @@ void ObjectService::Object::setRotation(const glm::vec3& rot) {
 }
 
 void ObjectService::Object::setQuaternion(const glm::quat& rot) {
-    hson->rotation = { -rot.x, -rot.y, -rot.z, rot.w };
+    hson->rotation = { -rot.x, -rot.y, rot.z, rot.w };
     model->setRotation(rot);
 
     for (auto* child : children) child->updateModelMat();
@@ -105,14 +105,14 @@ glm::vec3 ObjectService::Object::getLocalPosition() const {
     if (!hson->position.has_value()) return glm::vec3{ 0, 0, 0 };
 
     auto& hsonPos = hson->position.value();
-    return glm::vec3{ -hsonPos.x, hsonPos.y, hsonPos.z };
+    return glm::vec3{ hsonPos.x, hsonPos.y, -hsonPos.z };
 }
 
 glm::vec3 ObjectService::Object::getLocalRotation() const {
     if (!hson->rotation.has_value()) return glm::vec3{ 0, 0, 0 };
 
     auto& hsonRot = hson->rotation.value();
-    auto quat = glm::quat{ hsonRot.w, -hsonRot.x, -hsonRot.y, -hsonRot.z };
+    auto quat = glm::quat{ hsonRot.w, -hsonRot.x, -hsonRot.y, hsonRot.z };
     return glm::eulerAngles(quat);
 }
 
@@ -120,7 +120,7 @@ glm::quat ObjectService::Object::getLocalQuaternion() const {
     if (!hson->rotation.has_value()) return glm::quat{ 1, 0, 0, 0 };
 
     auto& hsonRot = hson->rotation.value();
-    return glm::quat{ hsonRot.w, -hsonRot.x, -hsonRot.y, -hsonRot.z };
+    return glm::quat{ hsonRot.w, -hsonRot.x, -hsonRot.y, hsonRot.z };
 }
 
 glm::vec3 ObjectService::Object::getPosition() const {

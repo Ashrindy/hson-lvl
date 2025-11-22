@@ -42,18 +42,13 @@ namespace ulvl {
 				Editor("Instance of", selected->getDisplayName().c_str());
 
 			auto localPos = selected->getLocalPosition();
-			math::flipX(localPos);
-			if (changed |= Editor("Position", localPos)) {
-				math::flipX(localPos);
+			if (changed |= Editor("Position", localPos))
 				selected->setLocalPosition(localPos);
-			}
 
 			auto localRot = selected->getLocalRotation();
-			math::flipXEuler(localRot);
 			auto degRot = glm::degrees(localRot);
 			if (changed |= Editor("Rotation", degRot)) {
 				localRot = glm::radians(degRot);
-				math::flipXEuler(localRot);
 				selected->setLocalRotation(localRot);
 			}
 
