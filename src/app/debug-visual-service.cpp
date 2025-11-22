@@ -3,6 +3,7 @@
 #include "../graphics/shaders/color_vs.h"
 #include "../graphics/shaders/color_ps.h"
 #include "../app.h"
+#include "../app/cleaner-service.h"
 #include "cleaner-service.h"
 #include <numbers>
 
@@ -262,14 +263,13 @@ void DebugVisualService::removeMeshes(int id) {
     sphere->removeMeshes(id);
     cylinder->removeMeshes(id);
 
+    auto* cleanerService = Application::instance->getService<CleanerService>();
+
     std::vector<int> indicesToRemove{};
     for (auto x = 0; x < lines.size(); x++)
         if (lines[x].id == id) {
             auto& line = lines[x];
-            line.model->clearMeshes();
-            auto& models = gfx::Graphics::instance->models;
-            models.erase(std::remove(models.begin(), models.end(), line.model));
-            delete line.model;
+            cleanerService->deleteModel(line.model);
             indicesToRemove.push_back(x);
         }
 
