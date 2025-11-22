@@ -15,6 +15,7 @@ A wrapper for `glm::vec3`.
 - `x()` - get or set the X value
 - `y()` - get or set the Y value
 - `z()` - get or set the Z value
+- `rotate(Vec4 rotation)` - rotates the vector by the quaternion rotation
 
 ### Vec4
 A wrapper for `glm::vec4`/`glm::quat`.
