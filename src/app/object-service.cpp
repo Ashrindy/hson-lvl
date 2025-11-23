@@ -193,16 +193,16 @@ void ObjectService::Object::updateModel() {
     ModelData modelData = Application::instance->getService<TemplateManager>()->currentTemplate->getModelData(this);
     if (modelData.vertices != nullptr) {
         model->clearMeshes();
-        model->addMesh(modelData.vertices, modelData.vertexCount, modelData.indices, modelData.indexCount, nullptr);
+        model->addMesh(modelData.vertices, modelData.vertexCount, modelData.indices, modelData.indexCount);
         delete modelData.vertices;
         delete modelData.indices;
     }
-    else if (model->indices.size() == 0) {
+    else if (model->pipeline.indexBuffer.indices.size() == 0) {
         gfx::BaseVertex vertices[]{
-            {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}},
-            {{ 0.5f, -0.5f, 0.0f}, {1.0f, 0.0f}},
-            {{ 0.5f,  0.5f, 0.0f}, {1.0f, 1.0f}},
-            {{-0.5f,  0.5f, 0.0f}, {0.0f, 1.0f}}
+            {{-0.5f, -0.5f, 0.0f}},
+            {{ 0.5f, -0.5f, 0.0f}},
+            {{ 0.5f,  0.5f, 0.0f}},
+            {{-0.5f,  0.5f, 0.0f}}
         };
 
         unsigned short indices[]{
@@ -210,7 +210,7 @@ void ObjectService::Object::updateModel() {
             2, 3, 0
         };
 
-        model->addMesh(vertices, ARRAY_SIZE(vertices), indices, ARRAY_SIZE(indices), nullptr);
+        model->addMesh(vertices, ARRAY_SIZE(vertices), indices, ARRAY_SIZE(indices));
     }
 }
 

@@ -16,7 +16,7 @@ DebugVisualService::~DebugVisualService() {
 void DebugVisualService::initCube() {
     cube = new gfx::InstancedModel{};
 
-    gfx::PosVertex cubeVertices[]{
+    gfx::BaseVertex cubeVertices[]{
         {{-0.5f, -0.5f,  0.5f}},
         {{ 0.5f, -0.5f,  0.5f}},
         {{ 0.5f,  0.5f,  0.5f}},
@@ -66,7 +66,7 @@ void DebugVisualService::initSphere() {
     static const int X_SEGMENTS{ 8 };
     static const int Y_SEGMENTS{ 8 };
 
-    gfx::PosVertex sphereVertices[(X_SEGMENTS + 1) * (Y_SEGMENTS + 1)]{};
+    gfx::BaseVertex sphereVertices[(X_SEGMENTS + 1) * (Y_SEGMENTS + 1)]{};
     unsigned short sphereIndices[X_SEGMENTS * Y_SEGMENTS * 6]{};
 
     const double PI{ std::numbers::pi };
@@ -124,7 +124,7 @@ void DebugVisualService::initCylinder() {
     static const int VERTEX_COUNT{ (RINGS + 1) * STRIDE + 2 * (SEGMENTS + 1) };
     static const int INDEX_COUNT{ SEGMENTS * 6 * RINGS + SEGMENTS * 6 };
 
-    gfx::PosVertex cylinderVertices[VERTEX_COUNT]{};
+    gfx::BaseVertex cylinderVertices[VERTEX_COUNT]{};
     unsigned short cylinderIndices[INDEX_COUNT]{};
 
     const double PI = std::numbers::pi;
@@ -242,7 +242,6 @@ void DebugVisualService::addLine(LineDesc& mesh) {
             { "POSITION", 0, 0, plume::RenderFormat::R32G32B32_FLOAT,    0, 0                 },
             { "COLOR",    0, 1, plume::RenderFormat::R32G32B32A32_FLOAT, 0, sizeof(float) * 3 }
         },
-        .vertexStride = sizeof(gfx::ColorVertex)
     };
     gfx::Model* model = new gfx::Model{ modelDesc };
     gfx::ColorVertex* vertices = new gfx::ColorVertex[mesh.positions.size()];
@@ -250,7 +249,7 @@ void DebugVisualService::addLine(LineDesc& mesh) {
         vertices[x].position = mesh.positions[x];
         vertices[x].color = mesh.color;
     }
-    model->addMesh(vertices, mesh.positions.size(), nullptr, 0, nullptr);
+    model->addMesh(vertices, mesh.positions.size(), nullptr, 0);
     delete[] vertices;
     model->setWorldMatrix(mesh.worldTransform);
 

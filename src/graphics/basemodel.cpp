@@ -1,7 +1,7 @@
 #include "basemodel.h"
 #include "graphics.h"
 #include "shaders/vs.h"
-#include "shaders/ps_color.h"
+#include "shaders/ps.h"
 
 using namespace ulvl::gfx;
 
@@ -12,7 +12,16 @@ BaseModel::BaseModel(ModelDesc desc) {
 void BaseModel::init(ModelDesc desc) {
     auto* graphics = Graphics::instance;
     auto& ctx = graphics->renderCtx;
-    vertexStride = desc.vertexStride;
+
+    if (!desc.vertexShader) {
+        desc.vertexShader = vs_shader;
+        desc.vertexShaderSize = sizeof(vs_shader);
+    }
+
+    if (!desc.pixelShader) {
+        desc.pixelShader = ps_shader;
+        desc.pixelShaderSize = sizeof(ps_shader);
+    }
 
     plume::RenderDescriptorRange range{};
     range.type = plume::RenderDescriptorRangeType::CONSTANT_BUFFER;
@@ -23,8 +32,6 @@ void BaseModel::init(ModelDesc desc) {
     descriptorDesc.descriptorRanges = &range;
     descriptorDesc.descriptorRangesCount = 1;
 
-    descriptor = ctx.device->createDescriptorSet(descriptorDesc);
-
     plume::RenderPushConstantRange pushConstantRange{};
     pushConstantRange.binding = 0;
     pushConstantRange.set = 0;
@@ -32,38 +39,91 @@ void BaseModel::init(ModelDesc desc) {
     pushConstantRange.size = sizeof(glm::mat4);
     pushConstantRange.stageFlags = plume::RenderShaderStageFlag::VERTEX;
 
-    plume::RenderPipelineLayoutDesc layoutDesc{};
-    layoutDesc.allowInputLayout = true;
-    layoutDesc.descriptorSetDescs = &descriptorDesc;
-    layoutDesc.descriptorSetDescsCount = 1;
-    layoutDesc.pushConstantRanges = &pushConstantRange;
-    layoutDesc.pushConstantRangesCount = 1;
+    Pipeline::Desc pipelineDesc{
+        .vertexShader = desc.vertexShader,
+        .vertexShaderSize = desc.vertexShaderSize,
+        .pixelShader = desc.pixelShader,
+        .pixelShaderSize = desc.pixelShaderSize,
+        .primitiveTopo = desc.primitiveTopo,
+        .cullMode = desc.cullMode,
+        .descriptorSetDescs = { descriptorDesc },
+        .pushConstantDescs = { pushConstantRange },
+        .vertexBufferDescs = { {.vertexLayout = desc.vertexLayout } }
+    };
 
-    pipelineLayout = ctx.device->createPipelineLayout(layoutDesc);
+    pipeline.init(pipelineDesc);
+    pipeline.descriptors[0].buffers.emplace_back(ctx.mainCBuffer.get(), sizeof(MainCBuffer));
+}
 
-    plume::RenderShaderFormat shaderFormat = ctx.renderInterface->getCapabilities().shaderFormat;
+void BaseModel::shutdown() {
+    pipeline.shutdown();
+}
 
-    std::unique_ptr<plume::RenderShader> vertexShader;
-    std::unique_ptr<plume::RenderShader> fragmentShader;
+void VertexInfo::calcStrideByLayout() {
+    auto& lastElem = vertexLayout[vertexLayout.size() - 1];
+    stride = lastElem.alignedByteOffset + plume::RenderFormatSize(lastElem.format);
+}
+
+std::unique_ptr<plume::RenderShader> Shader::getShader() {
+    auto* graphics = Graphics::instance;
+    auto& ctx = graphics->renderCtx;
+    plume::RenderShaderFormat shaderFormat{ ctx.renderInterface->getCapabilities().shaderFormat };
+
+    std::unique_ptr<plume::RenderShader> shader{};
 
     switch (shaderFormat) {
     case plume::RenderShaderFormat::SPIRV:
-        if (desc.vertexShader)
-            vertexShader = ctx.device->createShader(desc.vertexShader, desc.vertexShaderSize, "main", shaderFormat);
-        else
-            vertexShader = ctx.device->createShader(vs_shader, sizeof(vs_shader), "main", shaderFormat);
-        if (desc.pixelShader)
-            fragmentShader = ctx.device->createShader(desc.pixelShader, desc.pixelShaderSize, "main", shaderFormat);
-        else
-            fragmentShader = ctx.device->createShader(ps_color_shader, sizeof(ps_color_shader), "main", shaderFormat);
+        shader = ctx.device->createShader(data, size, "main", shaderFormat);
         break;
     default:
         assert(false && "Unknown shader format");
     }
 
-    inputSlots.emplace_back(0, vertexStride);
+    return std::move(shader);
+}
 
-    vertexLayout = desc.vertexLayout;
+void Pipeline::init(Desc& desc) {
+    auto* graphics = Graphics::instance;
+    auto& ctx = graphics->renderCtx;
+
+    description = desc;
+
+    for (auto& desc : desc.descriptorSetDescs)
+        descriptors.emplace_back(desc);
+
+    for (auto& desc : desc.pushConstantDescs)
+        pushConstants.emplace_back(desc.size);
+
+    updatePushConstantData();
+
+    plume::RenderPipelineLayoutDesc pipelineLayoutDesc{};
+    pipelineLayoutDesc.allowInputLayout = true;
+    pipelineLayoutDesc.descriptorSetDescs = desc.descriptorSetDescs.data();
+    pipelineLayoutDesc.descriptorSetDescsCount = desc.descriptorSetDescs.size();
+    pipelineLayoutDesc.pushConstantRanges = desc.pushConstantDescs.data();
+    pipelineLayoutDesc.pushConstantRangesCount = desc.pushConstantDescs.size();
+    pipelineLayout = ctx.device->createPipelineLayout(pipelineLayoutDesc);
+
+    vertexShader = { desc.vertexShader, desc.vertexShaderSize };
+    pixelShader = { desc.pixelShader, desc.pixelShaderSize };
+    
+    std::vector<plume::RenderInputElement> vertexLayout{};
+
+    for (auto x = 0; x < desc.vertexBufferDescs.size(); x++) {
+        auto& vDesc = desc.vertexBufferDescs[x];
+        vertexBuffers.emplace_back(vDesc.vertexLayout, vDesc.slotClass);
+
+        auto& vBuffer = vertexBuffers[x];
+        auto& vInfo = vBuffer.vertexInfo;
+
+        vBuffer.inputSlot = { (unsigned int)x, (unsigned int)vInfo.stride, vDesc.slotClass };
+        inputSlots.push_back(vBuffer.inputSlot);
+        
+        vertexLayout.insert(vertexLayout.end(), vInfo.vertexLayout.begin(), vInfo.vertexLayout.end());
+    }
+
+    auto vertShader = vertexShader.getShader();
+    auto pixShader = pixelShader.getShader();
 
     plume::RenderGraphicsPipelineDesc pipelineDesc{};
     pipelineDesc.inputSlots = inputSlots.data();
@@ -71,36 +131,144 @@ void BaseModel::init(ModelDesc desc) {
     pipelineDesc.inputElements = vertexLayout.data();
     pipelineDesc.inputElementsCount = static_cast<uint32_t>(vertexLayout.size());
     pipelineDesc.pipelineLayout = pipelineLayout.get();
-    pipelineDesc.vertexShader = vertexShader.get();
-    pipelineDesc.pixelShader = fragmentShader.get();
+    pipelineDesc.vertexShader = vertShader.get();
+    pipelineDesc.pixelShader = pixShader.get();
     pipelineDesc.renderTargetFormat[0] = plume::RenderFormat::B8G8R8A8_UNORM;
     pipelineDesc.renderTargetBlend[0] = plume::RenderBlendDesc::Copy();
     pipelineDesc.renderTargetCount = 1;
+    pipelineDesc.cullMode = desc.cullMode;
     pipelineDesc.primitiveTopology = desc.primitiveTopo;
-    pipelineDesc.depthEnabled = true;
-    pipelineDesc.depthFunction = plume::RenderComparisonFunction::LESS;
-    pipelineDesc.depthWriteEnabled = true;
+    pipelineDesc.depthEnabled = desc.depth.enabled;
+    pipelineDesc.depthFunction = desc.depth.function;
+    pipelineDesc.depthWriteEnabled = desc.depth.writeEnabled;
     pipelineDesc.depthTargetFormat = plume::RenderFormat::D32_FLOAT;
 
     pipeline = ctx.device->createGraphicsPipeline(pipelineDesc);
 }
 
-void BaseModel::shutdown() {
-    delete[] vertices;
-    vertices = nullptr;
-    vertexLayout.clear();
-    indices.clear();
-    pipeline.reset();
-    descriptor.reset();
-    pipelineLayout.reset();
-    vertexBuffer.reset();
-    indexBuffer.reset();
+void Pipeline::setVertices(void* vertices, unsigned int count, unsigned int vertexBufferIndex) {
+    if (vertexBuffers.size() < vertexBufferIndex) return;
+
+    vertexBuffers[vertexBufferIndex].setVertices(vertices, count);
+
+    updateVertexBufferViews();
 }
 
-size_t BaseModel::getVertexLayoutOffset(const char* semanticName) const {
-    for (auto& l : vertexLayout)
-        if (strcmp(l.semanticName, semanticName) == 0)
-            return l.alignedByteOffset;
+void Pipeline::addVertices(void* vertices, unsigned int count, unsigned int vertexBufferIndex) {
+    if (vertexBuffers.size() < vertexBufferIndex) return;
 
-    return 0;
+    vertexBuffers[vertexBufferIndex].addVertices(vertices, count);
+
+    updateVertexBufferViews();
+}
+
+void Pipeline::updateVertexBufferViews() {
+    vertexBufferViews.clear();
+
+    for (auto& buffer : vertexBuffers)
+        vertexBufferViews.push_back(buffer.bufferView);
+}
+
+void Pipeline::updatePushConstantData() {
+    pushConstantData.clear();
+
+    for (auto& pushConstant : pushConstants) {
+        size_t prevMax{ pushConstantData.size() };
+        pushConstantData.resize(prevMax + pushConstant.size);
+        if (pushConstant.data)
+            memcpy(pushConstantData.data() + prevMax, pushConstant.data, pushConstant.size);
+    }
+}
+
+void Pipeline::render() {
+    auto* graphics = Graphics::instance;
+    auto& ctx = graphics->renderCtx;
+
+    ctx.commandList->setGraphicsPipelineLayout(pipelineLayout.get());
+    ctx.commandList->setPipeline(pipeline.get());
+
+    ctx.commandList->setVertexBuffers(0, vertexBufferViews.data(), vertexBufferViews.size(), inputSlots.data());
+    if (indexBuffer.buffer) ctx.commandList->setIndexBuffer(&indexBuffer.bufferView);
+
+    if (pushConstantData.data())
+        ctx.commandList->setGraphicsPushConstants(0, pushConstantData.data(), 0, pushConstantData.size());
+
+    for (auto& descriptor : descriptors) {
+        for (auto x = 0; x < descriptor.buffers.size(); x++) {
+            auto& buffer = descriptor.buffers[x];
+            descriptor.descriptor->setBuffer(x, buffer.buffer, buffer.size);
+        }
+    }
+
+    for (auto x = 0; x < descriptors.size(); x++) ctx.commandList->setGraphicsDescriptorSet(descriptors[x].descriptor.get(), x);
+}
+
+void Pipeline::shutdown() {
+    vertexBuffers.clear();
+    pipeline.reset();
+    descriptors.clear();
+    pipelineLayout.reset();
+}
+
+void VertexBuffer::addVertices(void* newVertices, unsigned int count) {
+    auto* graphics = Graphics::instance;
+    auto& ctx = graphics->renderCtx;
+    size_t stride{ vertexInfo.stride };
+    char* newVerts = new char[(vertexCount + count) * stride];
+
+    if (vertices) {
+        memcpy(newVerts, vertices, vertexCount * stride);
+        delete[] vertices;
+    }
+    vertices = newVerts;
+
+    memcpy(&newVerts[vertexCount * stride], vertices, count * stride);
+
+    vertexCount += count;
+
+    unsigned int verticesSize = vertexCount * stride;
+    buffer = ctx.device->createBuffer(plume::RenderBufferDesc::VertexBuffer(verticesSize, plume::RenderHeapType::UPLOAD));
+    void* bufferData = buffer->map();
+    memcpy(bufferData, this->vertices, verticesSize);
+    buffer->unmap();
+
+    bufferView = { plume::RenderBufferReference{ buffer.get() }, verticesSize };
+}
+
+void VertexBuffer::setVertices(void* newVertices, unsigned int count) {
+    if (vertices) delete[] vertices;
+    vertexCount = 0;
+
+    if (newVertices)
+        addVertices(newVertices, count);
+}
+
+void IndexBuffer::setIndices(unsigned short* newIndices, unsigned int count) {
+    indices.clear();
+
+    if (newIndices)
+        addIndices(newIndices, count);
+}
+
+void IndexBuffer::addIndices(unsigned short* newIndices, unsigned int count) {
+    auto* graphics = Graphics::instance;
+    auto& ctx = graphics->renderCtx;
+
+    buffer.reset();
+
+    indices.insert(indices.end(), newIndices, newIndices + count);
+
+    unsigned int indicesSize = indices.size() * sizeof(unsigned short);
+    buffer = ctx.device->createBuffer(plume::RenderBufferDesc::IndexBuffer(indicesSize, plume::RenderHeapType::UPLOAD));
+    void* bufferData = buffer->map();
+    memcpy(bufferData, indices.data(), indicesSize);
+    buffer->unmap();
+    bufferView = plume::RenderIndexBufferView{ { buffer.get() }, indicesSize, plume::RenderFormat::R16_UINT };
+}
+
+DescriptorSet::DescriptorSet(plume::RenderDescriptorSetDesc& desc) {
+    auto* graphics = Graphics::instance;
+    auto& ctx = graphics->renderCtx;
+
+    descriptor = ctx.device->createDescriptorSet(desc);
 }
