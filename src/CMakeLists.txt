@@ -91,3 +91,11 @@ target_precompile_headers(${HE_LEVEL_NAME} PRIVATE "pch.h")
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET ${HE_LEVEL_NAME} PROPERTY CXX_STANDARD 20)
 endif()
+
+add_custom_command(
+    TARGET ${HE_LEVEL_NAME}
+    PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${HE_LEVEL_TEMPLATES_DIR}
+        ${CMAKE_BINARY_DIR}/src/templates
+)

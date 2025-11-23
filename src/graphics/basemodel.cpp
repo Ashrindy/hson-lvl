@@ -233,7 +233,10 @@ void VertexBuffer::addVertices(void* newVertices, unsigned int count) {
 }
 
 void VertexBuffer::setVertices(void* newVertices, unsigned int count) {
-    if (vertices) delete[] vertices;
+    if (vertices) {
+        delete[] vertices;
+        vertices = nullptr;
+    }
     vertexCount = 0;
 
     if (newVertices)
