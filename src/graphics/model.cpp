@@ -12,7 +12,6 @@ void Model::updateWorldMatrix() {
 		glm::translate(glm::mat4(1), position) *
 		glm::toMat4(rotation) *
 		glm::scale(glm::mat4(1), scale);
-    pipeline.updatePushConstantData();
 }
 
 Model::Model(ModelDesc desc) : BaseModel{} {
@@ -68,7 +67,7 @@ void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices
 
     pipeline.addVertices(vertices, vcount, 0);
     if (indices)
-        pipeline.addIndices(indices, vcount);
+        pipeline.addIndices(indices, icount);
 }
 
 void Model::clearMeshes() {

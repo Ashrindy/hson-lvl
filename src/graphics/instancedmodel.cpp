@@ -22,7 +22,7 @@ void InstancedModel::setModel(void* vertices, unsigned int vcount, unsigned shor
     auto& ctx = gfx->renderCtx;
 
     pipeline.setVertices(vertices, vcount, 0);
-    pipeline.setIndices(indices, vcount);
+    pipeline.setIndices(indices, icount);
 }
 
 void InstancedModel::addMesh(InstancedMesh mesh) {

@@ -113,7 +113,7 @@ namespace ulvl::gfx {
 			const unsigned char* pixelShader{ nullptr };
 			size_t pixelShaderSize{ 0 };
 			plume::RenderPrimitiveTopology primitiveTopo{ plume::RenderPrimitiveTopology::TRIANGLE_LIST };
-			plume::RenderCullMode cullMode{ plume::RenderCullMode::BACK };
+			plume::RenderCullMode cullMode{ plume::RenderCullMode::NONE };
 			Depth depth{};
 			std::vector<plume::RenderDescriptorSetDesc> descriptorSetDescs{};
 			std::vector<plume::RenderPushConstantRange> pushConstantDescs{};
@@ -133,7 +133,6 @@ namespace ulvl::gfx {
 	private:
 		std::vector<plume::RenderVertexBufferView> vertexBufferViews{};
 		std::vector<plume::RenderInputSlot> inputSlots{};
-		std::vector<char> pushConstantData{};
 
 	public:
 		Pipeline() = default;
@@ -146,7 +145,6 @@ namespace ulvl::gfx {
 		inline void addIndices(std::vector<unsigned short>& indices) { addIndices(indices.data(), indices.size()); }
 		void render();
 		void shutdown();
-		void updatePushConstantData();
 
 	private:
 		void updateVertexBufferViews();
@@ -160,7 +158,7 @@ namespace ulvl::gfx {
 
 		struct ModelDesc {
 			plume::RenderPrimitiveTopology primitiveTopo{ plume::RenderPrimitiveTopology::TRIANGLE_LIST };
-			plume::RenderCullMode cullMode{ plume::RenderCullMode::BACK };
+			plume::RenderCullMode cullMode{ plume::RenderCullMode::NONE };
 			const unsigned char* vertexShader{ nullptr };
 			size_t vertexShaderSize{ 0 };
 			const unsigned char* pixelShader{ nullptr };

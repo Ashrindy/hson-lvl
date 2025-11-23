@@ -94,8 +94,6 @@ void Pipeline::init(Desc& desc) {
     for (auto& desc : desc.pushConstantDescs)
         pushConstants.emplace_back(desc.size);
 
-    updatePushConstantData();
-
     plume::RenderPipelineLayoutDesc pipelineLayoutDesc{};
     pipelineLayoutDesc.allowInputLayout = true;
     pipelineLayoutDesc.descriptorSetDescs = desc.descriptorSetDescs.data();
@@ -169,17 +167,6 @@ void Pipeline::updateVertexBufferViews() {
         vertexBufferViews.push_back(buffer.bufferView);
 }
 
-void Pipeline::updatePushConstantData() {
-    pushConstantData.clear();
-
-    for (auto& pushConstant : pushConstants) {
-        size_t prevMax{ pushConstantData.size() };
-        pushConstantData.resize(prevMax + pushConstant.size);
-        if (pushConstant.data)
-            memcpy(pushConstantData.data() + prevMax, pushConstant.data, pushConstant.size);
-    }
-}
-
 void Pipeline::render() {
     auto* graphics = Graphics::instance;
     auto& ctx = graphics->renderCtx;
@@ -188,10 +175,11 @@ void Pipeline::render() {
     ctx.commandList->setPipeline(pipeline.get());
 
     ctx.commandList->setVertexBuffers(0, vertexBufferViews.data(), vertexBufferViews.size(), inputSlots.data());
-    if (indexBuffer.buffer) ctx.commandList->setIndexBuffer(&indexBuffer.bufferView);
+    if (indexBuffer.buffer) 
+        ctx.commandList->setIndexBuffer(&indexBuffer.bufferView);
 
-    if (pushConstantData.data())
-        ctx.commandList->setGraphicsPushConstants(0, pushConstantData.data(), 0, pushConstantData.size());
+    for (auto& pushConstant : pushConstants)
+        ctx.commandList->setGraphicsPushConstants(0, pushConstant.data, 0, pushConstant.size);
 
     for (auto& descriptor : descriptors) {
         for (auto x = 0; x < descriptor.buffers.size(); x++) {
@@ -222,7 +210,7 @@ void VertexBuffer::addVertices(void* newVertices, unsigned int count) {
     }
     vertices = newVerts;
 
-    memcpy(&newVerts[vertexCount * stride], vertices, count * stride);
+    memcpy(&newVerts[vertexCount * stride], newVertices, count * stride);
 
     vertexCount += count;
 
@@ -254,8 +242,6 @@ void IndexBuffer::addIndices(unsigned short* newIndices, unsigned int count) {
     auto* graphics = Graphics::instance;
     auto& ctx = graphics->renderCtx;
 
-    buffer.reset();
-
     indices.insert(indices.end(), newIndices, newIndices + count);
 
     unsigned int indicesSize = indices.size() * sizeof(unsigned short);
@@ -263,6 +249,7 @@ void IndexBuffer::addIndices(unsigned short* newIndices, unsigned int count) {
     void* bufferData = buffer->map();
     memcpy(bufferData, indices.data(), indicesSize);
     buffer->unmap();
+
     bufferView = plume::RenderIndexBufferView{ { buffer.get() }, indicesSize, plume::RenderFormat::R16_UINT };
 }
 
