@@ -90,7 +90,7 @@ class Spring {
         
         new_pos_x = first_speed * Spring.m_total_time * direction.x()
         new_pos_y = delta_y + Spring.keep_velocity_distance * direction.y()
-        new_pos_z = first_speed * Spring.m_total_time * -direction.z()
+        new_pos_z = first_speed * Spring.m_total_time * direction.z()
         // }
         // else
         // {
