@@ -2,8 +2,6 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include "graphics.h"
-#include "shaders/vs.h"
-#include "shaders/ps_color.h"
 
 using namespace ulvl::gfx;
 

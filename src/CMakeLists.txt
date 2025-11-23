@@ -20,8 +20,6 @@ add_executable (${HE_LEVEL_NAME}
 #	"graphics/fonts/NotoSansJP.h"
 	"graphics/shaders/vs.h"
 	"graphics/shaders/ps.h"
-	"graphics/shaders/ps_color.h" 
-	"graphics/shaders/vs_matless.h"  
 	"graphics/shaders/instance_vs.h"
 	"graphics/shaders/color_ps.h"
 	"graphics/shaders/color_vs.h"
