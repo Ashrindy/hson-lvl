@@ -27,6 +27,7 @@ ObjectService::Object::~Object() {
     auto* app = Application::instance;
     auto* objService = app->getService<ObjectService>();
     auto* cleanerService = app->getService<CleanerService>();
+    auto* debugVisual = app->getService<DebugVisualService>();
 
     for (auto* child : children)
         objService->removeObject(child);
@@ -36,6 +37,7 @@ ObjectService::Object::~Object() {
         objService->removeObject(instance);
 
     cleanerService->deleteModel(model);
+    debugVisual->removeMeshes((int)this);
 }
 
 void ObjectService::Object::setPosition(const glm::vec3& pos) {
