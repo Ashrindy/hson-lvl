@@ -56,6 +56,7 @@ namespace ulvl::app {
 	SQFUNC(Vec3GetZ);
 	SQFUNC(Vec3SetZ);
 	SQFUNC(Vec3RotateByQuat);
+	SQFUNC(Vec3Normalize);
 
 	// glm::vec4
 	SQFUNC(Vec4Ctor);
@@ -85,8 +86,15 @@ namespace ulvl::app {
 	SQFUNC(DebugVisualDrawCylinder);
 	SQFUNC(DebugVisualDrawLine);
 
+	// ------
+	//	math
+	// ------
+
+	SQFUNC(sqrt);
+
 	static void registerFuncs(SquirrelWrap& wrap) {
 		wrap.RegisterFunc(ToBytes);
 		wrap.RegisterFunc(GetObjByID);
+		wrap.RegisterFunc(sqrt);
 	}
 }

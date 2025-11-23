@@ -272,6 +272,9 @@ void DebugVisualService::removeMeshes(int id) {
             indicesToRemove.push_back(x);
         }
 
-    for (auto index : indicesToRemove)
-        lines.erase(lines.begin() + index);
+    int alreadyRemoved{ 0 };
+    for (auto index : indicesToRemove) {
+        lines.erase(lines.begin() + (index - alreadyRemoved));
+        alreadyRemoved++;
+    }
 }

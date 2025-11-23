@@ -32,6 +32,7 @@ namespace ulvl::app {
 			NEW_MEMBER_R("y", Vec3GetY, Vec3SetY)
 			NEW_MEMBER_R("z", Vec3GetZ, Vec3SetZ)
 			NEW_FUNC("rotate", Vec3RotateByQuat)
+			NEW_FUNC("normalize", Vec3Normalize)
 		);
 
 		NEW_CLASS(

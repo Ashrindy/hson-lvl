@@ -16,6 +16,7 @@ A wrapper for `glm::vec3`.
 - `y()` - get or set the Y value
 - `z()` - get or set the Z value
 - `rotate(Vec4 rotation)` - rotates the vector by the quaternion rotation
+- `normalize()` - returns the vector normalized
 
 ### Vec4
 A wrapper for `glm::vec4`/`glm::quat`.
@@ -71,6 +72,7 @@ A class used for adding debug visuals to the scene.
 
 ## Global Functions
 - `GetObjByID(string guid)` - get an object by its guid (returns the custom [Object](#object) class)
+- `sqrt(float x)` - gets the square root of x
 
 ## Interface
 The editor calls certain functions for its template functionality. The functions are called statically from a class, such as:

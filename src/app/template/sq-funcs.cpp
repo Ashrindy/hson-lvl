@@ -426,6 +426,24 @@ SQInteger ulvl::app::Vec3RotateByQuat(HSQUIRRELVM vm) {
 	return 1;
 }
 
+SQInteger ulvl::app::Vec3Normalize(HSQUIRRELVM vm) {
+	// Easier to do it this way than remake it in squirrel
+
+	glm::vec3* vec;
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&vec, 0, SQFalse);
+
+	sq_pushroottable(vm);
+	sq_pushstring(vm, "Vec3", -1);
+	sq_get(vm, -2);
+	sq_remove(vm, -2);
+	sq_createinstance(vm, -1);
+	glm::vec3* retVec = new glm::vec3(glm::normalize(*vec));
+	sq_setinstanceup(vm, -1, retVec);
+	sq_setreleasehook(vm, -1, Vec3ReleaseHook);
+
+	return 1;
+}
+
 SQInteger ulvl::app::Vec3SetZ(HSQUIRRELVM vm) {
 	glm::vec3* vec3{};
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&vec3, nullptr, SQFalse);
@@ -695,4 +713,13 @@ SQInteger ulvl::app::DebugVisualDrawLine(HSQUIRRELVM vm) {
 	debugVisual->addLine(mesh);
 
 	return 0;
+}
+
+SQInteger ulvl::app::sqrt(HSQUIRRELVM vm) {
+	float value{ 0 };
+	sq_getfloat(vm, 1, &value);
+
+	sq_pushfloat(vm, sqrtf(value));
+
+	return 1;
 }
