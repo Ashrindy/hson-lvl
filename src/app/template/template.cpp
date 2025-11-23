@@ -20,6 +20,12 @@ Template::Template(const char* templateName) : name{ templateName } {
 	reloadScripts();
 }
 
+bool Template::objectTemplateFileExists(ObjectService::Object* obj) const {
+	fs::path objPath = rel_to_exe(fs::path{ "templates" } / name / "src");
+	objPath /= { obj->hson->type + std::string{ ".nut" } };
+	return fs::exists(objPath);
+}
+
 void Template::reloadScripts() {
 	if (squirrelWrap) delete squirrelWrap;
 	squirrelWrap = new SquirrelWrap();
@@ -37,36 +43,28 @@ void Template::reloadScripts() {
 }
 
 ModelData Template::getModelData(ObjectService::Object* obj) {
-	fs::path objPath = rel_to_exe( fs::path{ "templates" } / name / "src" );
-	objPath /= { obj->hson->type + std::string{ ".nut" } };
-	if (!fs::exists(objPath))
+	if (!objectTemplateFileExists(obj))
 		return {};
 
 	return squirrelWrap->callGetModelData(obj);
 }
 
 void Template::addDebugVisual(ObjectService::Object* obj) {
-	fs::path objPath = rel_to_exe( fs::path{ "templates" } / name / "src" );
-	objPath /= { obj->hson->type + std::string{ ".nut" } };
-	if (!fs::exists(objPath))
+	if (!objectTemplateFileExists(obj))
 		return;
 
 	squirrelWrap->callAddDebugVisual(obj);
 }
 
 void Template::addDynamicDebugVisual(ObjectService::Object* obj) {
-	fs::path objPath = rel_to_exe(fs::path{ "templates" } / name / "src");
-	objPath /= { obj->hson->type + std::string{ ".nut" } };
-	if (!fs::exists(objPath))
+	if (!objectTemplateFileExists(obj))
 		return;
 
 	squirrelWrap->callAddDynamicDebugVisual(obj);
 }
 
 void Template::dynamicDebugVisualEnd(ObjectService::Object* obj) {
-	fs::path objPath = rel_to_exe(fs::path{ "templates" } / name / "src");
-	objPath /= { obj->hson->type + std::string{ ".nut" } };
-	if (!fs::exists(objPath))
+	if (!objectTemplateFileExists(obj))
 		return;
 
 	squirrelWrap->callDynamicDebugVisualEnd(obj);
