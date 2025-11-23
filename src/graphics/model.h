@@ -6,9 +6,8 @@ namespace ulvl::gfx {
 	struct Mesh {
 		int indexOffset;
 		int indexCount;
-		void* texture;
 
-		Mesh(int indexOffset, int indexCount, void* texture) : indexOffset{ indexOffset }, indexCount{ indexCount }, texture{ texture } {}
+		Mesh(int indexOffset, int indexCount) : indexOffset{ indexOffset }, indexCount{ indexCount } {}
 	};
 
 	class Model : public BaseModel {
@@ -16,14 +15,12 @@ namespace ulvl::gfx {
 		glm::vec3 position{ 0, 0, 0 };
 		glm::quat rotation{ 1, 0, 0, 0 };
 		glm::vec3 scale{ 1, 1, 1 };
-		math::Aabb aabb{};
 
 	private:
 		glm::mat4 worldMatrix{};
 		std::vector<Mesh> meshes;
 
 		void updateWorldMatrix();
-		void updateAabb();
 	public:
 		Model(ModelDesc desc = {});
 
@@ -36,7 +33,7 @@ namespace ulvl::gfx {
 		void setScale(const glm::vec3& scale);
 		void setWorldMatrix(const glm::mat4& mat);
 
-		void addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount, void* texture);
+		void addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount);
 		void clearMeshes();
 		inline const glm::mat4& getWorldMatrix() const { return worldMatrix; }
 

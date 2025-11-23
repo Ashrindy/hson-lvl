@@ -15,13 +15,8 @@ namespace ulvl::gfx {
 		void setPosition(const glm::vec3& pos);
 	};
 
-	struct PosVertex {
-		glm::vec3 pos;
-	};
-
 	class InstancedModel : public BaseModel {
 		std::vector<InstancedMesh> meshes;
-		std::unique_ptr<plume::RenderBuffer> instanceBuffer;
 	public:
 		InstancedModel(ModelDesc desc = {});
 
