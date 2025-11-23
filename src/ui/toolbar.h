@@ -21,7 +21,12 @@ namespace ulvl {
 					if (ImGui::MenuItem("Project", "Ctrl+Shift+N", nullptr, projectMgr->canNew())) projectMgr->newProj();
 					ImGui::EndMenu();
 				}
-				if (ImGui::MenuItem("Open", "Ctrl+O", nullptr, fileDialogServ->canOpen())) fileDialogServ->open();
+				if (ImGui::BeginMenu("Open", fileDialogServ->canOpen())) {
+					if (ImGui::MenuItem("Layer", "Ctrl+O", nullptr, fileDialogServ->canOpen())) fileDialogServ->openLayer();
+					if (ImGui::MenuItem("Project", "Ctrl+Shift+O", nullptr, fileDialogServ->canOpen())) fileDialogServ->openProject();
+					
+					ImGui::EndMenu();
+				}
 				if (ImGui::MenuItem("Save", "Ctrl+S", nullptr, objSelectMgr->canSave())) objSelectMgr->save();
 				if (ImGui::MenuItem("Save All", "Ctrl+Shift+S", nullptr, projectMgr->canSaveAll())) projectMgr->saveAll();
 
