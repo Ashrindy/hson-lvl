@@ -78,17 +78,18 @@ void InstancedModel::init(ModelDesc desc) {
         .primitiveTopo = desc.primitiveTopo,
         .cullMode = desc.cullMode,
         .descriptorSetDescs { descriptorDesc },
-        .vertexBufferDescs = { 
+        .vertexBufferDescs = {
             { .vertexLayout = desc.vertexLayout },
             {
-                .slotClass = plume::RenderInputSlotClassification::PER_INSTANCE_DATA,
                 .vertexLayout = {
                     { "MAT41",    0, 2, plume::RenderFormat::R32G32B32A32_FLOAT, 1, 0                  },
                     { "MAT42",    0, 3, plume::RenderFormat::R32G32B32A32_FLOAT, 1, sizeof(float) * 4  },
                     { "MAT43",    0, 4, plume::RenderFormat::R32G32B32A32_FLOAT, 1, sizeof(float) * 8  },
                     { "MAT44",    0, 5, plume::RenderFormat::R32G32B32A32_FLOAT, 1, sizeof(float) * 12 },
                     { "COLOR",    0, 6, plume::RenderFormat::R32G32B32A32_FLOAT, 1, sizeof(float) * 16 },
-                }
+                },
+                .slotClass = plume::RenderInputSlotClassification::PER_INSTANCE_DATA,
+                .stride = sizeof(InstancedMesh)
             }
         }
     };

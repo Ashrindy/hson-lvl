@@ -27,8 +27,9 @@ namespace ulvl::gfx {
 
 	struct VertexBuffer {
 		struct Desc {
-			plume::RenderInputSlotClassification slotClass{ plume::RenderInputSlotClassification::PER_VERTEX_DATA };
 			std::vector<plume::RenderInputElement> vertexLayout{};
+			plume::RenderInputSlotClassification slotClass{ plume::RenderInputSlotClassification::PER_VERTEX_DATA };
+			int stride{ -1 };
 		};
 
 		void* vertices{ nullptr };

@@ -113,8 +113,11 @@ void Pipeline::init(Desc& desc) {
 
         auto& vBuffer = vertexBuffers[x];
         auto& vInfo = vBuffer.vertexInfo;
+        
+        if (vDesc.stride != -1)
+            vInfo.stride = vDesc.stride;
 
-        vBuffer.inputSlot = { (unsigned int)x, (unsigned int)vInfo.stride, vDesc.slotClass };
+        vBuffer.inputSlot = { (unsigned int)x, (unsigned int)vInfo.stride, vDesc.slotClass};
         inputSlots.push_back(vBuffer.inputSlot);
         
         vertexLayout.insert(vertexLayout.end(), vInfo.vertexLayout.begin(), vInfo.vertexLayout.end());
