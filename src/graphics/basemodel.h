@@ -83,13 +83,12 @@ namespace ulvl::gfx {
 		}
 	};
 
-	struct RenderBuffer : Buffer {
+	struct RenderBuffer {
 		plume::RenderBuffer* buffer{ nullptr };
+		size_t size{ 0 };
 
 		RenderBuffer() = default;
-		RenderBuffer(plume::RenderBuffer* buffer, size_t size) : buffer{ buffer } {
-			this->size = size;
-		}
+		RenderBuffer(plume::RenderBuffer* buffer, size_t size) : buffer{ buffer }, size{ size } {}
 	};
 
 	struct DescriptorSet {

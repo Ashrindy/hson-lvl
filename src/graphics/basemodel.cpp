@@ -192,10 +192,19 @@ void Pipeline::render() {
 }
 
 void Pipeline::shutdown() {
-    vertexBuffers.clear();
+    for (auto& buff : vertexBuffers) {
+        delete[] buff.vertices;
+        buff.vertices = nullptr;
+        buff.vertexInfo.vertexLayout.clear();
+    }
+    indexBuffer.indices.clear();
     pipeline.reset();
-    descriptors.clear();
+    for (auto& desc : descriptors)
+        desc.descriptor.reset();
     pipelineLayout.reset();
+    for (auto& buff : vertexBuffers)
+        buff.buffer.reset();
+    indexBuffer.buffer.reset();
 }
 
 void VertexBuffer::addVertices(void* newVertices, unsigned int count) {
