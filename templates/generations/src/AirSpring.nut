@@ -1,4 +1,4 @@
-class SpringClassic 
+class AirSpring 
 {
     static function DynamicDebugVisualEnd(obj) 
     {
