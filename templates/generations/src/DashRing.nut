@@ -1,4 +1,4 @@
-class SpringClassic 
+class DashRing 
 {
     static function DynamicDebugVisualEnd(obj) 
     {

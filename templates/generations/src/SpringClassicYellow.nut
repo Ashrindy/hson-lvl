@@ -1,4 +1,4 @@
-class SpringClassic 
+class SpringClassicYellow 
 {
     static function DynamicDebugVisualEnd(obj) 
     {

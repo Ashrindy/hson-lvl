@@ -1,4 +1,4 @@
-class SpringClassic 
+class SpringFake 
 {
     static function DynamicDebugVisualEnd(obj) 
     {
