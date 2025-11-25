@@ -17,6 +17,9 @@
 
 #define ARRAY_SIZE(array) sizeof(array) / sizeof(array[0])
 
+#define STR(x) #x
+#define XSTR(x) STR(x)
+
 inline std::filesystem::path getExeDir() {
     static std::filesystem::path exeDir;
 

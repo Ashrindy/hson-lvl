@@ -11,9 +11,23 @@
 	sq_pop(vm, 1); \
 }
 
+#define NEW_ENUM(NAME, REGISTER_BODY) { \
+	sq_pushroottable(vm); \
+	sq_pushstring(vm, #NAME, -1); \
+	sq_newtable(vm); \
+	REGISTER_BODY \
+	sq_newslot(vm, -3, SQFalse); \
+	sq_pop(vm, 1); \
+}
+
 #define NEW_FUNC(NAME, FUNC) sq_pushstring(vm, NAME, -1); sq_newclosure(vm, FUNC, 0); sq_newslot(vm, -3, SQFalse);
 #define NEW_MEMBER_RW(NAME, GET, SET) NEW_FUNC(NAME, GET) NEW_FUNC(NAME, SET)
 #define NEW_MEMBER_R(NAME, GET) NEW_FUNC(NAME, GET)
+#define NEW_ENUM_VALUE(NAME, VALUE) sq_pushstring(vm, NAME, -1); sq_pushinteger(vm, (SQInteger)VALUE); sq_newslot(vm, -3, SQFalse);
+
+#define NEW_RENDERFORMAT_TYPE(NAME, TYPE) NEW_ENUM_VALUE(XSTR(NAME##_##TYPE), plume::RenderFormat::NAME##_##TYPE)
+#define NEW_RENDERFORMAT_FSUT(NAME) NEW_RENDERFORMAT_TYPE(NAME, FLOAT) NEW_RENDERFORMAT_TYPE(NAME, SINT) NEW_RENDERFORMAT_TYPE(NAME, UINT) NEW_RENDERFORMAT_TYPE(NAME, TYPELESS)
+#define NEW_RENDERFORMAT_SUT(NAME) NEW_RENDERFORMAT_TYPE(NAME, SINT) NEW_RENDERFORMAT_TYPE(NAME, UINT) NEW_RENDERFORMAT_TYPE(NAME, TYPELESS)
 
 namespace ulvl::app {
 	void registerTypes(SquirrelWrap& wrap) {
@@ -79,17 +93,35 @@ namespace ulvl::app {
 			NEW_FUNC("HasParent", GetObjHasParent)
 		);
 
+		NEW_ENUM(
+			VertexFormat,
+			NEW_RENDERFORMAT_SUT(R8)
+			NEW_RENDERFORMAT_FSUT(R16)
+			NEW_RENDERFORMAT_FSUT(R16G16)
+			NEW_RENDERFORMAT_FSUT(R32)
+			NEW_RENDERFORMAT_FSUT(R32G32)
+			NEW_RENDERFORMAT_FSUT(R32G32B32)
+			NEW_RENDERFORMAT_FSUT(R32G32B32A32)
+		);
+
+		NEW_CLASS(
+			VertexElement,
+			NEW_FUNC("constructor", VertexElementCtor)
+		);
+
 		NEW_CLASS(
 			ModelData,
 			NEW_FUNC("GetVertexCount", ModelDataGetVertexCount)
 			NEW_FUNC("SetVertexCount", ModelDataSetVertexCount)
-			NEW_FUNC("GetVertexStride", ModelDataGetVertexStride)
-			NEW_FUNC("SetVertexStride", ModelDataSetVertexStride)
 			NEW_FUNC("SetVertices", ModelDataSetVertices)
 
 			NEW_FUNC("GetIndexCount", ModelDataGetIndexCount)
 			NEW_FUNC("SetIndexCount", ModelDataSetIndexCount)
 			NEW_FUNC("SetIndices", ModelDataSetIndices)
+
+			NEW_FUNC("AddVertexElement", ModelDataAddVertexElement)
+			NEW_FUNC("SetVertexLayout", ModelDataSetVertexLayout)
+			NEW_FUNC("GetVertexStride", ModelDataGetVertexStride)
 		);
 
 		NEW_CLASS(
@@ -98,6 +130,11 @@ namespace ulvl::app {
 			NEW_FUNC("DrawSphere", DebugVisualDrawSphere)
 			NEW_FUNC("DrawCylinder", DebugVisualDrawCylinder)
 			NEW_FUNC("DrawLine", DebugVisualDrawLine)
+		);
+
+		NEW_CLASS(
+			HLModel,
+			NEW_FUNC("GetModelData", HLModelGetModelData)
 		);
 	}
 }

@@ -2,6 +2,7 @@
 #include "../object-service.h"
 #include "../debug-visual-service.h"
 #include "../../app.h"
+#include <hedgelib/models/hl_hh_model.h>
 #include <glm/gtx/quaternion.hpp>
 
 using namespace ulvl::app;
@@ -683,6 +684,32 @@ SQInteger ulvl::app::Mat3ReleaseHook(SQUserPointer p, SQInteger size) {
 
 // ModelData
 
+SQInteger ulvl::app::VertexElementCtor(HSQUIRRELVM vm) {
+	SQInteger nargs{ sq_gettop(vm) };
+
+	const char* name{};
+	sq_getstring(vm, 2, &name);
+
+	SQInteger fmtInt{};
+	sq_getinteger(vm, 3, &fmtInt);
+	plume::RenderFormat format = (plume::RenderFormat)fmtInt;
+
+	SQInteger alignedByteOffset{ -1 };
+	if (nargs >= 4)
+		sq_getinteger(vm, 4, &alignedByteOffset);
+
+	plume::RenderInputElement* inputElem = new plume::RenderInputElement{ name, 0, 0, format, 0, (unsigned int)alignedByteOffset };
+	sq_setinstanceup(vm, 1, inputElem);
+	sq_setreleasehook(vm, 1, VertexElementReleaseHook);
+
+	return 1;
+}
+
+SQInteger ulvl::app::VertexElementReleaseHook(SQUserPointer p, SQInteger size) {
+	delete (plume::RenderInputElement*)p;
+	return 0;
+}
+
 SQInteger ulvl::app::ModelDataGetVertexCount(HSQUIRRELVM vm) {
 	ModelData* modelData{};
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
@@ -701,32 +728,16 @@ SQInteger ulvl::app::ModelDataSetVertexCount(HSQUIRRELVM vm) {
 	return 0;
 }
 
-SQInteger ulvl::app::ModelDataGetVertexStride(HSQUIRRELVM vm) {
-	ModelData* modelData{};
-	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
-
-	sq_pushinteger(vm, modelData->vertexStride);
-
-	return 1;
-}
-
-SQInteger ulvl::app::ModelDataSetVertexStride(HSQUIRRELVM vm) {
-	ModelData* modelData{};
-	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
-
-	sq_getinteger(vm, 2, (SQInteger*)&modelData->vertexStride);
-
-	return 0;
-}
-
 SQInteger ulvl::app::ModelDataSetVertices(HSQUIRRELVM vm) {
 	ModelData* modelData{};
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
 
 	if (modelData->vertices) delete modelData->vertices;
 
-	modelData->vertices = new char[modelData->vertexCount * modelData->vertexStride];
-	for (size_t x = 0; x < (modelData->vertexCount * modelData->vertexStride); x++) {
+	modelData->vertexInfo.calcStrideByLayout();
+	int vertSize = modelData->vertexCount * modelData->vertexInfo.stride;
+	modelData->vertices = new char[vertSize];
+	for (int x = 0; x < vertSize; x++) {
 		sq_pushinteger(vm, x);
 		sq_get(vm, 2);
 		SQInteger val{};
@@ -763,7 +774,7 @@ SQInteger ulvl::app::ModelDataSetIndices(HSQUIRRELVM vm) {
 	if (modelData->indices) delete modelData->indices;
 
 	modelData->indices = new unsigned short[modelData->indexCount];
-	for (size_t x = 0; x < modelData->indexCount; x++) {
+	for (int x = 0; x < modelData->indexCount; x++) {
 		sq_pushinteger(vm, x);
 		sq_get(vm, 2);
 		SQInteger val{};
@@ -774,6 +785,216 @@ SQInteger ulvl::app::ModelDataSetIndices(HSQUIRRELVM vm) {
 
 	return 0;
 }
+
+SQInteger ulvl::app::ModelDataAddVertexElement(HSQUIRRELVM vm) {
+	ModelData* modelData{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
+
+	plume::RenderInputElement* elem{};
+	sq_getinstanceup(vm, 2, (SQUserPointer*)&elem, nullptr, SQTrue);
+
+	modelData->vertexInfo.calcStrideByLayout();
+	size_t byteOffset{ modelData->vertexInfo.stride };
+	if (elem->alignedByteOffset != -1)
+		byteOffset = elem->alignedByteOffset;
+	modelData->vertexInfo.vertexLayout.emplace_back(elem->semanticName, 0, 0, elem->format, 0, byteOffset);
+
+	return 0;
+}
+
+SQInteger ulvl::app::ModelDataSetVertexLayout(HSQUIRRELVM vm) {
+	ModelData* modelData{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
+
+	modelData->vertexInfo.vertexLayout.clear();
+
+	HSQOBJECT elements;
+	sq_resetobject(&elements);
+	sq_getstackobj(vm, 2, &elements);
+	SQInteger elemLen = sq_getsize(vm, 2);
+	for (auto x = 0; x < elemLen; x++) {
+		sq_pushinteger(vm, x);
+		if (SQ_SUCCEEDED(sq_get(vm, 2))) {
+			plume::RenderInputElement* elem{};
+			sq_getinstanceup(vm, -1, (SQUserPointer*)&elem, nullptr, SQFalse);
+
+			modelData->vertexInfo.calcStrideByLayout();
+			size_t byteOffset{ modelData->vertexInfo.stride };
+			if (elem->alignedByteOffset != -1)
+				byteOffset = elem->alignedByteOffset;
+			modelData->vertexInfo.vertexLayout.emplace_back(elem->semanticName, 0, 0, elem->format, 0, byteOffset);
+		}
+		sq_pop(vm, 1);
+	}
+
+	return 0;
+}
+
+SQInteger ulvl::app::ModelDataGetVertexStride(HSQUIRRELVM vm) {
+	ModelData* modelData{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
+
+	modelData->vertexInfo.calcStrideByLayout();
+	sq_pushinteger(vm, modelData->vertexInfo.stride);
+
+	return 1;
+}
+
+SQInteger ulvl::app::ModelDataAssign(HSQUIRRELVM vm) {
+	ModelData* self{};
+	sq_getinstanceup(vm, 2, (SQUserPointer*)&self, nullptr, SQFalse);
+
+	ModelData* other{};
+	sq_getinstanceup(vm, 3, (SQUserPointer*)&other, nullptr, SQFalse);
+
+	self->vertexInfo.vertexLayout = std::move(other->vertexInfo.vertexLayout);
+	self->vertices = std::move(other->vertices);
+	self->indices = std::move(other->indices);
+	self->vertexCount = other->vertexCount;
+	self->indexCount = other->indexCount;
+
+	return 0;
+}
+
+SQInteger ulvl::app::ModelDataReleaseHook(SQUserPointer p, SQInteger size) {
+	delete (ModelData*)p;
+	return 0;
+}
+
+// HLModel
+constexpr static plume::RenderFormat toPlume(const hl::hh::mirage::raw_vertex_format format) {
+	switch (format) {
+	case hl::hh::mirage::raw_vertex_format::float1: return plume::RenderFormat::R32_FLOAT;
+	case hl::hh::mirage::raw_vertex_format::float2: return plume::RenderFormat::R32G32_FLOAT;
+	case hl::hh::mirage::raw_vertex_format::float3: return plume::RenderFormat::R32G32B32_FLOAT;
+	case hl::hh::mirage::raw_vertex_format::float4: return plume::RenderFormat::R32G32B32A32_FLOAT;
+
+	case hl::hh::mirage::raw_vertex_format::int1: 
+	case hl::hh::mirage::raw_vertex_format::int1_norm: return plume::RenderFormat::R32_SINT;
+	case hl::hh::mirage::raw_vertex_format::int2: 
+	case hl::hh::mirage::raw_vertex_format::int2_norm: return plume::RenderFormat::R32G32_SINT;
+	case hl::hh::mirage::raw_vertex_format::int4: 
+	case hl::hh::mirage::raw_vertex_format::int4_norm: return plume::RenderFormat::R32G32B32A32_SINT;
+
+	case hl::hh::mirage::raw_vertex_format::uint1: 
+	case hl::hh::mirage::raw_vertex_format::uint1_norm: return plume::RenderFormat::R32_UINT;
+	case hl::hh::mirage::raw_vertex_format::uint2: 
+	case hl::hh::mirage::raw_vertex_format::uint2_norm: return plume::RenderFormat::R32G32_UINT;
+	case hl::hh::mirage::raw_vertex_format::uint4: 
+	case hl::hh::mirage::raw_vertex_format::uint4_norm: return plume::RenderFormat::R32G32B32A32_UINT;
+
+	case hl::hh::mirage::raw_vertex_format::byte4:
+	case hl::hh::mirage::raw_vertex_format::byte4_norm: return plume::RenderFormat::R8G8B8A8_SINT;
+
+	case hl::hh::mirage::raw_vertex_format::d3d_color:
+	case hl::hh::mirage::raw_vertex_format::ubyte4:
+	case hl::hh::mirage::raw_vertex_format::ubyte4_norm: return plume::RenderFormat::R8G8B8A8_UINT;
+
+	case hl::hh::mirage::raw_vertex_format::short2: return plume::RenderFormat::R16G16_SINT;
+	case hl::hh::mirage::raw_vertex_format::short2_norm: return plume::RenderFormat::R16G16_SNORM;
+	case hl::hh::mirage::raw_vertex_format::short4: return plume::RenderFormat::R16G16B16A16_SINT;
+	case hl::hh::mirage::raw_vertex_format::short4_norm: return plume::RenderFormat::R16G16B16A16_SNORM;
+
+	case hl::hh::mirage::raw_vertex_format::ushort2: return plume::RenderFormat::R16G16_UINT;
+	case hl::hh::mirage::raw_vertex_format::ushort2_norm: return plume::RenderFormat::R16G16_UNORM;
+	case hl::hh::mirage::raw_vertex_format::ushort4: return plume::RenderFormat::R16G16B16A16_UINT;
+	case hl::hh::mirage::raw_vertex_format::ushort4_norm: return plume::RenderFormat::R16G16B16A16_UNORM;
+
+	case hl::hh::mirage::raw_vertex_format::udec3:
+	case hl::hh::mirage::raw_vertex_format::udec3_norm: return plume::RenderFormat::R32_UINT;
+
+	case hl::hh::mirage::raw_vertex_format::dec3:
+	case hl::hh::mirage::raw_vertex_format::dec3_norm: return plume::RenderFormat::R32_SINT;
+
+	case hl::hh::mirage::raw_vertex_format::uhend3:
+	case hl::hh::mirage::raw_vertex_format::uhend3_norm:
+	case hl::hh::mirage::raw_vertex_format::udhen3:
+	case hl::hh::mirage::raw_vertex_format::udhen3_norm: return plume::RenderFormat::R32_UINT;
+
+	case hl::hh::mirage::raw_vertex_format::hend3:
+	case hl::hh::mirage::raw_vertex_format::hend3_norm:
+	case hl::hh::mirage::raw_vertex_format::dhen3:
+	case hl::hh::mirage::raw_vertex_format::dhen3_norm: return plume::RenderFormat::R32_SINT;
+
+	case hl::hh::mirage::raw_vertex_format::float16_2: return plume::RenderFormat::R16G16_FLOAT;
+	case hl::hh::mirage::raw_vertex_format::float16_4: return plume::RenderFormat::R16G16B16A16_FLOAT;
+	}
+}
+
+constexpr static const char* toPlume(const hl::hh::mirage::raw_vertex_type type) {
+	switch (type) {
+	case hl::hh::mirage::raw_vertex_type::position:     return "POSITION";
+	case hl::hh::mirage::raw_vertex_type::blend_weight: return "BLENDWEIGHT";
+	case hl::hh::mirage::raw_vertex_type::blend_indices:return "BLENDINDICES";
+	case hl::hh::mirage::raw_vertex_type::normal:       return "NORMAL";
+	case hl::hh::mirage::raw_vertex_type::psize:        return "PSIZE";
+	case hl::hh::mirage::raw_vertex_type::texcoord:     return "TEXCOORD";
+	case hl::hh::mirage::raw_vertex_type::tangent:      return "TANGENT";
+	case hl::hh::mirage::raw_vertex_type::binormal:     return "BINORMAL";
+	case hl::hh::mirage::raw_vertex_type::tess_factor:  return "TESSFACTOR";
+	case hl::hh::mirage::raw_vertex_type::position_t:   return "POSITIONT";
+	case hl::hh::mirage::raw_vertex_type::color:        return "COLOR";
+	case hl::hh::mirage::raw_vertex_type::fog:          return "FOG";
+	case hl::hh::mirage::raw_vertex_type::depth:        return "DEPTH";
+	case hl::hh::mirage::raw_vertex_type::sample:       return "SAMPLE";
+	default: return "";
+	}
+}
+
+SQInteger ulvl::app::HLModelGetModelData(HSQUIRRELVM vm) {
+	hl::hh::mirage::skeletal_model* model{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&model, nullptr, SQFalse);
+
+	ModelData* modelData = new ModelData{};
+	auto& mesh = model->meshGroups[0].opaq[0];
+
+	for (auto& elem : mesh.vertexElements) modelData->vertexInfo.vertexLayout.emplace_back(toPlume(elem.type), elem.index, 0, toPlume(elem.format), 0, elem.offset);
+	modelData->vertexInfo.calcStrideByLayout();
+
+	size_t vertSize{ modelData->vertexInfo.stride * mesh.vertexCount };
+	modelData->vertices = new char[vertSize];
+	memcpy(modelData->vertices, mesh.vertices.get(), vertSize);
+	modelData->vertexCount = mesh.vertexCount;
+
+	modelData->indices = new unsigned short[mesh.faces.size()];
+	memcpy(modelData->indices, mesh.faces.data(), mesh.faces.size() * sizeof(unsigned short));
+	modelData->indexCount = mesh.faces.size();
+
+	sq_pushroottable(vm);
+	sq_pushstring(vm, "ModelData", -1);
+	sq_get(vm, -2);
+	sq_remove(vm, -2);
+	sq_createinstance(vm, -1);
+	sq_setinstanceup(vm, -1, modelData);
+	sq_setreleasehook(vm, -1, ModelDataReleaseHook);
+
+	return 1;
+}
+
+SQInteger ulvl::app::HLModelLoadFilepath(HSQUIRRELVM vm) {
+	const char* filepath{ nullptr };
+	sq_getstring(vm, 2, &filepath);
+
+	std::filesystem::path path{ filepath };
+
+	sq_pushroottable(vm);
+	sq_pushstring(vm, "HLModel", -1);
+	sq_get(vm, -2);
+	sq_remove(vm, -2);
+	sq_createinstance(vm, -1);
+	hl::hh::mirage::skeletal_model* retVal = new hl::hh::mirage::skeletal_model{ path };
+	sq_setinstanceup(vm, -1, retVal);
+	sq_setreleasehook(vm, -1, HLModelReleaseHook);
+
+	return 1;
+}
+
+SQInteger ulvl::app::HLModelReleaseHook(SQUserPointer p, SQInteger size) {
+	delete (hl::hh::mirage::skeletal_model*)p;
+	return 0;
+}
+
+// DebugVisual
 
 SQInteger ulvl::app::DebugVisualDrawCube(HSQUIRRELVM vm) {
 	DebugVisualService* debugVisual{};
@@ -916,6 +1137,8 @@ SQInteger ulvl::app::DebugVisualDrawLine(HSQUIRRELVM vm) {
 
 	return 0;
 }
+
+// math
 
 SQInteger ulvl::app::sqrt(HSQUIRRELVM vm) {
 	float value{ 0 };

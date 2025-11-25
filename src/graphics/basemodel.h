@@ -22,6 +22,11 @@ namespace ulvl::gfx {
 
 		VertexInfo() = default;
 		VertexInfo(std::vector<plume::RenderInputElement>& vertexLayout) : vertexLayout{ vertexLayout } { calcStrideByLayout(); }
+		static size_t calcStrideByLayout(const std::vector<plume::RenderInputElement>& layout);
+		static bool compareLayouts(const std::vector<plume::RenderInputElement>& a, const std::vector<plume::RenderInputElement>& b);
+		static void* getItem(const void* vertices, const int vertexIdx, const size_t vertexStride, const int offset);
+		static void* getItem(const void* vertices, const int vertexIdx, const std::vector<plume::RenderInputElement>& layout, const char* semanticName, const int semanticIndex);
+		static void* convertVertices(const void* vertices, const int vcount, const std::vector<plume::RenderInputElement>& origLayout, const std::vector<plume::RenderInputElement>& newLayout);
 		void calcStrideByLayout();
 	};
 

@@ -33,7 +33,7 @@ namespace ulvl::gfx {
 		void setScale(const glm::vec3& scale);
 		void setWorldMatrix(const glm::mat4& mat);
 
-		void addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount);
+		void addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount, const std::vector<plume::RenderInputElement>& vertexLayout = {});
 		void clearMeshes();
 		inline const glm::mat4& getWorldMatrix() const { return worldMatrix; }
 

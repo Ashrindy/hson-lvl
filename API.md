@@ -56,18 +56,29 @@ A wrapper for `ulvl::app::ObjectService::Object`.
 - `id()` - get the object's guid of the object (returns Squirrels string)
 - `HasParent()` - returns true or false whether the object has a parent
 
+### VertexElement
+A wrapper for `plume::RenderInputElement`.
+#### Functions
+- `VertexElement(string name, RenderFormat format, int alignedByteOffset)` - a constructor for the class, `alignedByteOffset` is optional
+
 ### ModelData
 A class used for setting the model of an object.
 Indices are always u16.
 #### Functions
 - `GetVertexCount()` - get the set vertex count
 - `SetVertexCount(int count)` - set the vertex count
-- `GetVertexStride()` - get the set vertex stride
-- `SetVertexStride(int stride)` - set the vertex stride
 - `SetVertices(void* vertices)` - set the vertices
 - `GetIndexCount()` - get the set index count
 - `SetIndexCount(int count)` - set the index count
 - `SetIndices(unsigned short* indices)` - set the indices
+- `AddVertexElement(VertexElement elem)` - adds a [vertex element](#vertexelement)
+- `SetVertexLayout(VertexElement[] elems)` - sets the vertex layout
+- `GetVertexStride()` - gets the vertex stride
+
+### HLModel
+A wrapper for `hl::hh::mirage::skeletal_model`.
+#### Functions
+- `GetModelData()` - returns its data as [ModelData](#modeldata)
 
 ### DebugVisual
 A class used for adding debug visuals to the scene.
@@ -83,6 +94,8 @@ A class used for adding debug visuals to the scene.
 - `fmax(float a, float b)` - returns the bigger float between `a` and `b`
 - `fmin(float a, float b)` - returns the smaller float between `a` and `b`
 - `fabs(float a)` - returns the abs of float `a`
+- `ModelDataAssign(ModelData a, ModelData b)` - assigns one [ModelData](#modeldata) to another
+- `HLModelLoadFilepath(string filepath)` - loads an [HLModel](#hlmodel) from a filepath
 
 ## Interface
 The editor calls certain functions for its template functionality. The functions are called statically from a class, such as:

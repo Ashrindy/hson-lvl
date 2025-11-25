@@ -53,9 +53,17 @@ void Model::setWorldMatrix(const glm::mat4& mat) {
     glm::decompose(worldMatrix, scale, rotation, position, skew, perspective);
 }
 
-void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount) {
+void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount, const std::vector<plume::RenderInputElement>& vertexLayout) {
     auto* gfx = Graphics::instance;
     auto& ctx = gfx->renderCtx;
+
+    bool layoutsDifferent{ false };
+    if (vertexLayout.size() > 0)
+        layoutsDifferent = !VertexInfo::compareLayouts(pipeline.vertexBuffers[0].vertexInfo.vertexLayout, vertexLayout);
+
+    void* finalVertices = vertices;
+    if (layoutsDifferent)
+        finalVertices = VertexInfo::convertVertices(vertices, vcount, vertexLayout, pipeline.vertexBuffers[0].vertexInfo.vertexLayout);
 
     int indexOffset = pipeline.indexBuffer.indices.size();
     unsigned int indexC{ icount };
@@ -63,7 +71,7 @@ void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices
         indexC = vcount;
 	meshes.emplace_back(indexOffset, indexC);
 
-    pipeline.addVertices(vertices, vcount, 0);
+    pipeline.addVertices(finalVertices, vcount, 0);
     if (indices)
         pipeline.addIndices(indices, icount);
 }

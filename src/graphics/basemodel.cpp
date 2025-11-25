@@ -59,9 +59,79 @@ void BaseModel::shutdown() {
     pipeline.shutdown();
 }
 
+size_t VertexInfo::calcStrideByLayout(const std::vector<plume::RenderInputElement>& layout) {
+    if (layout.size() == 0) return 0;
+
+    auto& lastElem = layout[layout.size() - 1];
+    return lastElem.alignedByteOffset + plume::RenderFormatSize(lastElem.format);;
+}
+
+bool VertexInfo::compareLayouts(const std::vector<plume::RenderInputElement>& a, const std::vector<plume::RenderInputElement>& b) {
+    if (a.size() > 0 && b.size() > 0) {
+        if (a.size() != b.size())
+            return false;
+        else
+            for (auto x = 0; x < b.size(); x++) {
+                auto& elemA = b[x];
+                auto& elemB = a[x];
+                if (strcmp(elemA.semanticName, elemB.semanticName) != 0 ||
+                    elemA.semanticIndex != elemB.semanticIndex ||
+                    elemA.location != elemB.location ||
+                    elemA.format != elemB.format ||
+                    elemA.slotIndex != elemB.slotIndex ||
+                    elemA.alignedByteOffset != elemB.alignedByteOffset)
+                {
+                    return false;
+                }
+            }
+    }
+    return true;
+}
+
+void* VertexInfo::getItem(const void* vertices, const int vertexIdx, const size_t vertexStride, const int offset) {
+    return &((char*)vertices)[vertexIdx * vertexStride + offset];
+}
+
+void* VertexInfo::getItem(const void* vertices, const int vertexIdx, const std::vector<plume::RenderInputElement>& layout, const char* semanticName, const int semanticIndex) {
+    size_t stride{ calcStrideByLayout(layout) };
+    int offset{ -1 };
+
+    for (auto& elem : layout) {
+        if (strcmp(elem.semanticName, semanticName) == 0 && elem.semanticIndex == semanticIndex) {
+            offset = elem.alignedByteOffset;
+            break;
+        }
+    }
+
+    if (offset == -1) return nullptr;
+
+    return getItem(vertices, vertexIdx, stride, offset);
+}
+
+void* VertexInfo::convertVertices(const void* vertices, const int vcount, const std::vector<plume::RenderInputElement>& origLayout, const std::vector<plume::RenderInputElement>& newLayout) {
+    size_t stride{ calcStrideByLayout(newLayout) };
+    size_t vertSize{ vcount * stride };
+    void* newVerts = new char[vertSize];
+    memset(newVerts, 0, vertSize);
+
+    for (auto x = 0; x < vcount; x++) {
+        void* vertex = &((char*)newVerts)[x * stride];
+        size_t vertexPos{ 0 };
+        for (auto& elem : newLayout) {
+            auto* value = getItem(vertices, x, origLayout, elem.semanticName, elem.semanticIndex);
+
+            if (value)
+                memcpy(&((char*)vertex)[vertexPos], value, plume::RenderFormatSize(elem.format));
+
+            vertexPos += elem.alignedByteOffset;
+        }
+    }
+
+    return newVerts;
+}
+
 void VertexInfo::calcStrideByLayout() {
-    auto& lastElem = vertexLayout[vertexLayout.size() - 1];
-    stride = lastElem.alignedByteOffset + plume::RenderFormatSize(lastElem.format);
+    stride = calcStrideByLayout(vertexLayout);
 }
 
 std::unique_ptr<plume::RenderShader> Shader::getShader() {
@@ -148,7 +218,7 @@ void Pipeline::init(Desc& desc) {
 }
 
 void Pipeline::setVertices(void* vertices, unsigned int count, unsigned int vertexBufferIndex) {
-    if (vertexBuffers.size() < vertexBufferIndex) return;
+    if (vertexBuffers.size() < vertexBufferIndex || count == 0) return;
 
     vertexBuffers[vertexBufferIndex].setVertices(vertices, count);
 

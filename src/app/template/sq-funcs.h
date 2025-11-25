@@ -79,14 +79,28 @@ namespace ulvl::app {
 	//	ModelData
 	// -----------
 
+	SQFUNC(VertexElementCtor);
+	RELEASE_HOOK(VertexElement);
+
 	SQFUNC(ModelDataGetVertexCount);
 	SQFUNC(ModelDataSetVertexCount);
-	SQFUNC(ModelDataGetVertexStride);
-	SQFUNC(ModelDataSetVertexStride);
 	SQFUNC(ModelDataSetVertices);
 	SQFUNC(ModelDataGetIndexCount);
 	SQFUNC(ModelDataSetIndexCount);
 	SQFUNC(ModelDataSetIndices);
+	SQFUNC(ModelDataAddVertexElement);
+	SQFUNC(ModelDataSetVertexLayout);
+	SQFUNC(ModelDataGetVertexStride);
+	SQFUNC(ModelDataAssign);
+	RELEASE_HOOK(ModelData);
+
+	// -------------
+	//	 Hedgelib
+	// -------------
+
+	SQFUNC(HLModelGetModelData);
+	SQFUNC(HLModelLoadFilepath);
+	RELEASE_HOOK(HLModel);
 
 	// -------------
 	//	DebugVisual
@@ -113,5 +127,7 @@ namespace ulvl::app {
 		wrap.RegisterFunc(fmax);
 		wrap.RegisterFunc(fmin);
 		wrap.RegisterFunc(fabs);
+		wrap.RegisterFunc(HLModelLoadFilepath);
+		wrap.RegisterFunc(ModelDataAssign);
 	}
 }

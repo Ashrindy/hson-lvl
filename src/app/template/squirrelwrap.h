@@ -1,17 +1,18 @@
 #pragma once
 #include <squirrel.h>
 #include "../object-service.h"
+#include "../../graphics/basemodel.h"
 #include <filesystem>
 
 #define RegisterFunc(FUNC) registerFunction(FUNC, #FUNC)
 
 namespace ulvl::app {
 	struct ModelData {
-		void* vertices;
-		size_t vertexCount;
-		size_t vertexStride;
-		unsigned short* indices;
-		size_t indexCount;
+		void* vertices{ nullptr };
+		int vertexCount{ -1 };
+		gfx::VertexInfo vertexInfo{};
+		unsigned short* indices{ nullptr };
+		int indexCount{ -1 };
 	};
 
 	struct SquirrelWrap {

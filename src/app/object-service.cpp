@@ -193,7 +193,7 @@ void ObjectService::Object::updateModel() {
     ModelData modelData = Application::instance->getService<TemplateManager>()->currentTemplate->getModelData(this);
     if (modelData.vertices != nullptr) {
         model->clearMeshes();
-        model->addMesh(modelData.vertices, modelData.vertexCount, modelData.indices, modelData.indexCount);
+        model->addMesh(modelData.vertices, modelData.vertexCount, modelData.indices, modelData.indexCount, modelData.vertexInfo.vertexLayout);
         delete modelData.vertices;
         delete modelData.indices;
     }
