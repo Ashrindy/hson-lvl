@@ -156,7 +156,7 @@ void Pipeline::setVertices(void* vertices, unsigned int count, unsigned int vert
 }
 
 void Pipeline::addVertices(void* vertices, unsigned int count, unsigned int vertexBufferIndex) {
-    if (vertexBuffers.size() < vertexBufferIndex) return;
+    if (vertexBuffers.size() < vertexBufferIndex || count == 0) return;
 
     vertexBuffers[vertexBufferIndex].addVertices(vertices, count);
 

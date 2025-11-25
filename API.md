@@ -17,6 +17,9 @@ A wrapper for `glm::vec3`.
 - `z()` - get or set the Z value
 - `rotate(Vec4 rotation)` - rotates the vector by the quaternion rotation
 - `normalize()` - returns the vector normalized
+- `multiplyMat3(Mat3 mat)` - returns the vector multiplied by `mat`
+- `distancesq(Vec3 b)` - returns the distance between the vector and vector `b` squared
+- `length()` - returns the length of the vector
 
 ### Vec4
 A wrapper for `glm::vec4`/`glm::quat`.
@@ -26,6 +29,9 @@ A wrapper for `glm::vec4`/`glm::quat`.
 - `y()` - get or set the Y value
 - `z()` - get or set the Z value
 - `w()` - get or set the W value
+
+### Mat3
+A wrapper for `glm::mat3`.
 
 ### Parameters
 A wrapper for `hl::radix_tree<hl::hson::parameter>`.
@@ -42,6 +48,7 @@ A wrapper for `ulvl::app::ObjectService::Object`.
 #### Functions
 - `position()` - get the world position of the object (returns the custom [Vec3](#vec3) class)
 - `rotation()` - get the rotation of the object (returns the custom [Vec4](#vec4) class)
+- `linear()` - get the rotation matrix of the object (returns the custom [Mat3](#mat3) class)
 - `localPosition()` - get the local position of the object (returns the custom [Vec3](#vec3) class)
 - `name()` - get the name of the object (returns the custom [String](#string) class)
 - `parameters()` - get the parameters of the object (returns the custom [Parameters](#parameters) class)
@@ -73,6 +80,9 @@ A class used for adding debug visuals to the scene.
 ## Global Functions
 - `GetObjByID(string guid)` - get an object by its guid (returns the custom [Object](#object) class)
 - `sqrt(float x)` - gets the square root of x
+- `fmax(float a, float b)` - returns the bigger float between `a` and `b`
+- `fmin(float a, float b)` - returns the smaller float between `a` and `b`
+- `fabs(float a)` - returns the abs of float `a`
 
 ## Interface
 The editor calls certain functions for its template functionality. The functions are called statically from a class, such as:

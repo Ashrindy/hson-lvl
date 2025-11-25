@@ -1,93 +1,84 @@
 class Spring {
 	static function AddDebugVisual(obj, debugVisual) {
-		print("test\n");
         local position = obj.position();
         local rotation = obj.rotation();
+		local params = obj.parameters();
         local color = Vec4(1, 0, 1, 1)
 		local points = [];
-		local dtVec = Vec3(0.01666668, 0.01666668, 0.01666668);
+		local gravityDir = Vec3(0, -1, 0);
+		local dt = 0.016666668;
 
-		local start = Vec3(position.x(), position.y(), position.z());
-		local end = Vec3(position.x() + 10, position.y() + 10, position.z() + 10);
-
-		local params = obj.parameters();
+		local timeElapsed = 0.0;
 		local speed = params.GetParameterFloat("firstSpeed");
+		local velocityDistance = 0.0;
+		if (fabs(speed) > 0.000001)
+			velocityDistance = params.GetParameterFloat("keepVelocityDistance") / speed;
+
 		local outOfControl = params.GetParameterFloat("outOfControl");
-		local accelTime = params.GetParameterFloat("keepVelocityDistance") / speed;
-		local totalTime = accelTime + outOfControl;
+		local outOfControlTime = fmax(outOfControl - velocityDistance, 0.0);
 
-		local pos = start;
-		local lastStoredPos = pos;
+		local upVector0 = Vec3(0, 0.349999, 0);
+		position = upVector0.multiplyMat3(obj.linear()) + position;
+		local oldPosition = position;
+		local up = Vec3(0, 1, 0);
+		position = up.multiplyMat3(obj.linear());
 
-		local dir = Vec3Sub(end, start);
-		local distSq = Vec3LengthSq(dir);
+		local speedDistance = position * speed;
 
-		if (distSq > 0)
-			dir = Vec3Divide(dir, Vec3(sqrt(distSq), sqrt(distSq), sqrt(distSq)));
-		else
-			dir = Vec3(0, 1, 0);
+		position = speedDistance * velocityDistance + gravityDir + (((gravityDir * 35.0 * outOfControlTime) + speedDistance * 2.0) * outOfControlTime * 0.5);
 
-		local vel = Vec3Multiply(dir, Vec3(speed, speed, speed));
+		local maxTime = outOfControlTime + velocityDistance;
 
-		local gravity = Vec3(0, -1, 0);
+		gravityDir = gravityDir * 35.0;
 
-		local t = 0;
+		local prevNewPos = speedDistance;
+		local pos = oldPosition;
+		local prevPos = oldPosition;
 
-		while (t < totalTime) {
-			if (t < accelTime) {
-				vel = Vec3Add(vel, Vec3Multiply(dir, dtVec));
-			}
-			else if (t > outOfControl) {
-				vel = Vec3Add(vel, Vec3Multiply(gravity, dtVec));
+		points.append(pos);
 
-				local vlenSq = Vec3LengthSq(vel);
-
-				if (vlenSq > 0) {
-					local inv = 1 / sqrt(vlenSq);
-					local vdir = Vec3Multiply(vel, Vec3(inv, inv, inv));
-					vel = vdir;
+		if (maxTime > 0) {
+			while (timeElapsed < maxTime) {
+				local newPos = Vec3(0, 0, 0);
+				if (timeElapsed < velocityDistance) {
+					newPos = prevNewPos;
+				}
+				else if (timeElapsed > outOfControl) {
+					// Most of the time unused
+					prevNewPos = prevNewPos + (gravityDir * dt);
+					local gravityDirNorm = gravityDir.normalize();
+					if (gravityDirNorm >= 0.0000000099999999) {
+						local gravityDirNormSqrt = sqrt(gravityDirNorm);
+						if (gravityDirNormSqrt != 0.0) {
+							position = gravityDir / gravityDirNormSqrt;
+						}
+					}
+					else {
+						position = Vec3(0, 0, 0);
+					}
+					// TODO: Figure out that one func
 				}
 				else {
-					vel = Vec3(0, 0, 0);
+					newPos = prevNewPos + (gravityDir * dt);
+					prevNewPos = newPos;
 				}
+				pos = pos + (newPos * dt);
+				if (pos.distancesq(prevPos) >= 1.0) {
+					points.append(pos);
+					prevPos = pos;
+				}
+				timeElapsed = timeElapsed + dt;
 			}
-			else {
-				vel = Vec3Add(vel, Vec3Multiply(gravity, dtVec));
-			}
-
-			pos = Vec3Add(pos, Vec3Multiply(vel, dtVec));
-
-			local deltaPos = Vec3Sub(pos, lastStoredPos);
-			if (Vec3LengthSq(deltaPos) >= 1) {
-				points.append(lastStoredPos);
-				points.append(pos);
-				lastStoredPos = pos;
-			}
-
-			t = t + 0.01666668;
 		}
 
-		print("test\n");
-        debugVisual.DrawLine(color, Vec3(0,0,0), Vec4(0,0,0,0), points, obj);
+		// TODO: Find a way to smooth out the line like the game (SNS I think)
+		local finalPoints = [];
+
+		for (local i = 0; i + 1 < points.len(); i++) {
+			finalPoints.append(points[i]);
+			finalPoints.append(points[i + 1]);
+		}
+
+        debugVisual.DrawLine(color, finalPoints, obj);
     }
-}
-
-function Vec3Add(v1, v2) {
-    return Vec3(v1.x() + v2.x(), v1.y() + v2.y(), v1.z() + v2.z())
-}
-
-function Vec3Sub(v1, v2) {
-    return Vec3(v1.x() - v2.x(), v1.y() - v2.y(), v1.z() - v2.z())
-}
-
-function Vec3Multiply(vecOne, vecTwo) {
-    return Vec3(vecOne.x() * vecTwo.x(), vecOne.y() * vecTwo.y(), vecOne.z() * vecTwo.z())
-}
-
-function Vec3Divide(vecOne, vecTwo) {
-    return Vec3(vecOne.x() / vecTwo.x(), vecOne.y() / vecTwo.y(), vecOne.z() / vecTwo.z())
-}
-
-function Vec3LengthSq(vec) {
-	return vec.x()*vec.x() + vec.y()*vec.y() + vec.z()*vec.z();
 }

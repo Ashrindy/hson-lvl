@@ -274,6 +274,19 @@ SQInteger ulvl::app::GetObjRotation(HSQUIRRELVM vm) {
 	sq_setreleasehook(vm, -1, Vec4ReleaseHook);
 	return 1;
 }
+SQInteger ulvl::app::GetObjLinear(HSQUIRRELVM vm) {
+	ObjectService::Object* self = nullptr;
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&self, nullptr, SQFalse);
+
+	sq_pushroottable(vm);
+	sq_pushstring(vm, "Mat3", -1);
+	sq_get(vm, -2);
+	sq_createinstance(vm, -1);
+	glm::mat3* linear = new glm::mat3{ self->getWorldMatrix() };
+	sq_setinstanceup(vm, -1, linear);
+	sq_setreleasehook(vm, -1, Mat3ReleaseHook);
+	return 1;
+}
 SQInteger ulvl::app::GetObjName(HSQUIRRELVM vm) {
 	ObjectService::Object* self = nullptr;
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&self, nullptr, SQFalse);
@@ -444,6 +457,170 @@ SQInteger ulvl::app::Vec3Normalize(HSQUIRRELVM vm) {
 	return 1;
 }
 
+SQInteger ulvl::app::Vec3Add(HSQUIRRELVM vm) {
+	glm::vec3* a{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&a, 0, SQFalse);
+
+	auto type = sq_gettype(vm, 2);
+	glm::vec3* b{ nullptr };
+	float fB{ 0 };
+	if (type == SQObjectType::OT_INSTANCE)
+		sq_getinstanceup(vm, 2, (SQUserPointer*)&b, 0, SQFalse);
+	else if (type == SQObjectType::OT_FLOAT)
+		sq_getfloat(vm, 2, &fB);
+
+	sq_pushroottable(vm);
+	sq_pushstring(vm, "Vec3", -1);
+	sq_get(vm, -2);
+	sq_remove(vm, -2);
+	sq_createinstance(vm, -1);
+	glm::vec3* retVec{};
+	if (b)
+		retVec = new glm::vec3{ *a + *b };
+	else
+		retVec = new glm::vec3{ *a + fB };
+	sq_setinstanceup(vm, -1, retVec);
+	sq_setreleasehook(vm, -1, Vec3ReleaseHook);
+
+	return 1;
+}
+
+SQInteger ulvl::app::Vec3Sub(HSQUIRRELVM vm) {
+	glm::vec3* a{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&a, 0, SQFalse);
+
+	auto type = sq_gettype(vm, 2);
+	glm::vec3* b{ nullptr };
+	float fB{ 0 };
+	if (type == SQObjectType::OT_INSTANCE)
+		sq_getinstanceup(vm, 2, (SQUserPointer*)&b, 0, SQFalse);
+	else if (type == SQObjectType::OT_FLOAT)
+		sq_getfloat(vm, 2, &fB);
+
+	sq_pushroottable(vm);
+	sq_pushstring(vm, "Vec3", -1);
+	sq_get(vm, -2);
+	sq_remove(vm, -2);
+	sq_createinstance(vm, -1);
+	glm::vec3* retVec{};
+	if (b)
+		retVec = new glm::vec3{ *a - *b };
+	else
+		retVec = new glm::vec3{ *a - fB };
+	sq_setinstanceup(vm, -1, retVec);
+	sq_setreleasehook(vm, -1, Vec3ReleaseHook);
+
+	return 1;
+}
+
+SQInteger ulvl::app::Vec3Multiply(HSQUIRRELVM vm) {
+	auto type = sq_gettype(vm, 1);
+	glm::vec3* a{ nullptr };
+	float fA{ 1 };
+	if (type == SQObjectType::OT_INSTANCE)
+		sq_getinstanceup(vm, 1, (SQUserPointer*)&a, 0, SQFalse);
+	else if (type == SQObjectType::OT_FLOAT)
+		sq_getfloat(vm, 1, &fA);
+
+	type = sq_gettype(vm, 2);
+	glm::vec3* b{ nullptr };
+	float fB{ 1 };
+	if (type == SQObjectType::OT_INSTANCE)
+		sq_getinstanceup(vm, 2, (SQUserPointer*)&b, 0, SQFalse);
+	else if (type == SQObjectType::OT_FLOAT)
+		sq_getfloat(vm, 2, &fB);
+
+	sq_pushroottable(vm);
+	sq_pushstring(vm, "Vec3", -1);
+	sq_get(vm, -2);
+	sq_remove(vm, -2);
+	sq_createinstance(vm, -1);
+	glm::vec3* retVec{};
+	if (a && b)
+		retVec = new glm::vec3{ *a * *b };
+	else if (a && !b)
+		retVec = new glm::vec3{ *a * fB };
+	else if (!a && b)
+		retVec = new glm::vec3{ fA * *b };
+	sq_setinstanceup(vm, -1, retVec);
+	sq_setreleasehook(vm, -1, Vec3ReleaseHook);
+
+	return 1;
+}
+
+SQInteger ulvl::app::Vec3MultiplyMat3(HSQUIRRELVM vm) {
+	glm::vec3* a{ nullptr };
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&a, 0, SQFalse);
+
+	glm::mat3* b{ nullptr };
+	sq_getinstanceup(vm, 2, (SQUserPointer*)&b, 0, SQFalse);
+
+	sq_pushroottable(vm);
+	sq_pushstring(vm, "Vec3", -1);
+	sq_get(vm, -2);
+	sq_remove(vm, -2);
+	sq_createinstance(vm, -1);
+	glm::vec3* retVec{};
+	retVec = new glm::vec3{ *b * *a };
+	sq_setinstanceup(vm, -1, retVec);
+	sq_setreleasehook(vm, -1, Vec3ReleaseHook);
+
+	return 1;
+}
+
+SQInteger ulvl::app::Vec3Divide(HSQUIRRELVM vm) {
+	glm::vec3* a{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&a, 0, SQFalse);
+
+	auto type = sq_gettype(vm, 2);
+	glm::vec3* b{ nullptr };
+	float fB{ 1 };
+	if (type == SQObjectType::OT_INSTANCE)
+		sq_getinstanceup(vm, 2, (SQUserPointer*)&b, 0, SQFalse);
+	else if (type == SQObjectType::OT_FLOAT)
+		sq_getfloat(vm, 2, &fB);
+
+	sq_pushroottable(vm);
+	sq_pushstring(vm, "Vec3", -1);
+	sq_get(vm, -2);
+	sq_remove(vm, -2);
+	sq_createinstance(vm, -1);
+	glm::vec3* retVec{};
+	if (b)
+		retVec = new glm::vec3{ *a / *b };
+	else
+		retVec = new glm::vec3{ *a / fB };
+	sq_setinstanceup(vm, -1, retVec);
+	sq_setreleasehook(vm, -1, Vec3ReleaseHook);
+
+	return 1;
+}
+
+SQInteger ulvl::app::Vec3DistanceSq(HSQUIRRELVM vm) {
+	glm::vec3* a{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&a, 0, SQFalse);
+
+	glm::vec3* b{};
+	sq_getinstanceup(vm, 2, (SQUserPointer*)&b, 0, SQFalse);
+
+	float dx = a->x - b->x;
+	float dy = a->y - b->y;
+	
+	float retVal = dx*dx + dy*dy;
+	sq_pushfloat(vm, retVal);
+
+	return 1;
+}
+
+SQInteger ulvl::app::Vec3Length(HSQUIRRELVM vm) {
+	glm::vec3* a{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&a, 0, SQFalse);
+	float retVal = sqrtf(a->x* a->x + a->y * a->y + a->z * a->z);
+	sq_pushfloat(vm, retVal);
+
+	return 1;
+}
+
 SQInteger ulvl::app::Vec3SetZ(HSQUIRRELVM vm) {
 	glm::vec3* vec3{};
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&vec3, nullptr, SQFalse);
@@ -494,6 +671,13 @@ SQInteger ulvl::app::Vec4SetW(HSQUIRRELVM vm) {
 
 SQInteger ulvl::app::Vec4ReleaseHook(SQUserPointer p, SQInteger size) {
 	delete (glm::vec4*)p;
+	return 0;
+}
+
+// glm::mat3
+
+SQInteger ulvl::app::Mat3ReleaseHook(SQUserPointer p, SQInteger size) {
+	delete (glm::mat3*)p;
 	return 0;
 }
 
@@ -682,33 +866,51 @@ SQInteger ulvl::app::DebugVisualDrawLine(HSQUIRRELVM vm) {
 	glm::vec4* color{};
 	sq_getinstanceup(vm, 2, (SQUserPointer*)&color, nullptr, SQFalse);
 
-	glm::vec3* pos{};
-	sq_getinstanceup(vm, 3, (SQUserPointer*)&pos, nullptr, SQFalse);
+	int curIdx{ 3 };
 
-	glm::vec4* rot{};
-	sq_getinstanceup(vm, 4, (SQUserPointer*)&rot, nullptr, SQFalse);
+	std::vector<glm::vec3> glmPos{};
+	glm::vec3* rawPos{ nullptr };
+	glm::vec4* rawRot{ nullptr };
+
+	auto type = sq_gettype(vm, curIdx);
+	if (type == SQObjectType::OT_INSTANCE) {
+		sq_getinstanceup(vm, curIdx, (SQUserPointer*)&rawPos, nullptr, SQFalse);
+		curIdx++;
+
+		sq_getinstanceup(vm, curIdx, (SQUserPointer*)&rawRot, nullptr, SQFalse);
+		curIdx++;
+	}
 
 	HSQOBJECT positions;
 	sq_resetobject(&positions);
-	sq_getstackobj(vm, 5, &positions);
-	SQInteger posLen = sq_getsize(vm, 5);
-	std::vector<glm::vec3> glmPos{};
+	sq_getstackobj(vm, curIdx, &positions);
+	SQInteger posLen = sq_getsize(vm, curIdx);
 	for (auto x = 0; x < posLen; x++) {
 		sq_pushinteger(vm, x);
-		if (SQ_SUCCEEDED(sq_get(vm, 5))) {
+		if (SQ_SUCCEEDED(sq_get(vm, curIdx))) {
 			glm::vec3* pos{};
 			sq_getinstanceup(vm, -1, (SQUserPointer*)&pos, nullptr, SQFalse);
 			glmPos.push_back(*pos);
 		}
+		sq_pop(vm, 1);
 	}
+	curIdx++;
+
+	glm::vec3 pos{ 0,0,0 };
+	if (rawPos)
+		pos = *rawPos;
+
+	glm::quat rot{ 1,0,0,0 };
+	if (rawRot)
+		rot = *(glm::quat*)rawRot;
 
 	ObjectService::Object* object{};
-	sq_getinstanceup(vm, 6, (SQUserPointer*)&object, nullptr, SQFalse);
+	sq_getinstanceup(vm, curIdx, (SQUserPointer*)&object, nullptr, SQFalse);
 
 	app::DebugVisualService::LineDesc mesh{};
 	mesh.id = (int)object;
 	mesh.positions = std::move(glmPos);
-	mesh.worldTransform = glm::translate(glm::mat4{ 1 }, *pos) * glm::toMat4(*(glm::quat*)rot);
+	mesh.worldTransform = glm::translate(glm::mat4{ 1 }, pos) * glm::toMat4(rot);
 	mesh.color = *color;
 	debugVisual->addLine(mesh);
 
@@ -720,6 +922,37 @@ SQInteger ulvl::app::sqrt(HSQUIRRELVM vm) {
 	sq_getfloat(vm, 1, &value);
 
 	sq_pushfloat(vm, sqrtf(value));
+
+	return 1;
+}
+
+SQInteger ulvl::app::fmax(HSQUIRRELVM vm) {
+	float value{ 0 };
+	sq_getfloat(vm, 1, &value);
+	float max{ 0 };
+	sq_getfloat(vm, 2, &max);
+
+	sq_pushfloat(vm, fmaxf(value, max));
+
+	return 1;
+}
+
+SQInteger ulvl::app::fmin(HSQUIRRELVM vm) {
+	float value{ 0 };
+	sq_getfloat(vm, 1, &value);
+	float max{ 0 };
+	sq_getfloat(vm, 2, &max);
+
+	sq_pushfloat(vm, fminf(value, max));
+
+	return 1;
+}
+
+SQInteger ulvl::app::fabs(HSQUIRRELVM vm) {
+	float value{ 0 };
+	sq_getfloat(vm, 1, &value);
+
+	sq_pushfloat(vm, fabsf(value));
 
 	return 1;
 }

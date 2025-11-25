@@ -34,6 +34,7 @@ namespace ulvl::app {
 	SQFUNC(GetObjLocalPosition);
 	SQFUNC(GetObjWorldPosition);
 	SQFUNC(GetObjRotation);
+	SQFUNC(GetObjLinear);
 	SQFUNC(GetObjName);
 	SQFUNC(GetObjParameters);
 	SQFUNC(GetObjParent);
@@ -57,12 +58,22 @@ namespace ulvl::app {
 	SQFUNC(Vec3SetZ);
 	SQFUNC(Vec3RotateByQuat);
 	SQFUNC(Vec3Normalize);
+	SQFUNC(Vec3Add);
+	SQFUNC(Vec3Sub);
+	SQFUNC(Vec3Multiply);
+	SQFUNC(Vec3MultiplyMat3);
+	SQFUNC(Vec3Divide);
+	SQFUNC(Vec3DistanceSq);
+	SQFUNC(Vec3Length);
 
 	// glm::vec4
 	SQFUNC(Vec4Ctor);
 	RELEASE_HOOK(Vec4);
 	SQFUNC(Vec4GetW);
 	SQFUNC(Vec4SetW);
+
+	// glm::mat3
+	RELEASE_HOOK(Mat3);
 
 	// -----------
 	//	ModelData
@@ -91,10 +102,16 @@ namespace ulvl::app {
 	// ------
 
 	SQFUNC(sqrt);
+	SQFUNC(fmax);
+	SQFUNC(fmin);
+	SQFUNC(fabs);
 
 	static void registerFuncs(SquirrelWrap& wrap) {
 		wrap.RegisterFunc(ToBytes);
 		wrap.RegisterFunc(GetObjByID);
 		wrap.RegisterFunc(sqrt);
+		wrap.RegisterFunc(fmax);
+		wrap.RegisterFunc(fmin);
+		wrap.RegisterFunc(fabs);
 	}
 }
