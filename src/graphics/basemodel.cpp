@@ -248,6 +248,18 @@ VertexBuffer& Pipeline::getMainVertexBuffer() {
     return vertexBuffers.front();
 }
 
+Sampler* Pipeline::addSampler(plume::RenderSamplerDesc& desc, int descriptorIdx) {
+    if (descriptors.size() < descriptorIdx) return nullptr;
+
+    return &descriptors[descriptorIdx].addSampler(desc);
+}
+
+Texture* Pipeline::addTexture(plume::RenderTextureDesc& desc, int descriptorIdx) {
+    if (descriptors.size() < descriptorIdx) return nullptr;
+
+    return &descriptors[descriptorIdx].addTexture(desc);
+}
+
 void Pipeline::render() {
     auto* graphics = Graphics::instance;
     auto& ctx = graphics->renderCtx;
@@ -262,11 +274,14 @@ void Pipeline::render() {
     for (auto& pushConstant : pushConstants)
         ctx.commandList->setGraphicsPushConstants(0, pushConstant.data, 0, pushConstant.size);
 
-    for (auto& descriptor : descriptors) {
-        for (auto x = 0; x < descriptor.buffers.size(); x++) {
-            auto& buffer = descriptor.buffers[x];
+    for (auto x = 0; x < descriptors.size(); x++) {
+        auto& descriptor = descriptors[x];
+        for (auto& buffer : descriptor.buffers)
             descriptor.descriptor->setBuffer(x, buffer.buffer, buffer.size);
-        }
+        for (auto& sampler : descriptor.samplers)
+            descriptor.descriptor->setSampler(x, sampler.sampler.get());
+        for (auto& texture : descriptor.textures)
+            descriptor.descriptor->setTexture(x, texture.texture.get(), plume::RenderTextureLayout::SHADER_READ, texture.textureView.get());
     }
 
     for (auto x = 0; x < descriptors.size(); x++) ctx.commandList->setGraphicsDescriptorSet(descriptors[x].descriptor.get(), x);
@@ -351,4 +366,46 @@ DescriptorSet::DescriptorSet(plume::RenderDescriptorSetDesc& desc) {
     auto& ctx = graphics->renderCtx;
 
     descriptor = ctx.device->createDescriptorSet(desc);
+}
+
+Sampler& DescriptorSet::addSampler(plume::RenderSamplerDesc& desc) {
+    return samplers.emplace_back(desc);
+}
+
+Texture& DescriptorSet::addTexture(plume::RenderTextureDesc& desc) {
+    return textures.emplace_back(desc);
+}
+
+Texture::Texture(plume::RenderTextureDesc& desc) {
+    auto* graphics = Graphics::instance;
+    auto& ctx = graphics->renderCtx;
+
+    textureDesc = desc;
+
+    texture = ctx.device->createTexture(desc);
+
+    plume::RenderTextureViewDesc viewDesc{};
+    viewDesc.dimension = plume::RenderTextureDimensionToView(desc.dimension);
+    viewDesc.mipLevels = desc.mipLevels;
+    viewDesc.arraySize = desc.arraySize;
+    viewDesc.format = desc.format;
+    textureView = texture->createTextureView(viewDesc);
+}
+
+void Texture::setDataBC7(void* data, size_t size, unsigned int width, unsigned int height, plume::RenderFormat format, plume::RenderTexture* texture) {
+    auto* graphics = Graphics::instance;
+    auto& ctx = graphics->renderCtx;
+
+    // TODO: Implement BC7 texture data copying logic
+}
+
+void Texture::setData(void* data, size_t size) {
+    // TODO: Implement texture data copying logic
+}
+
+Sampler::Sampler(plume::RenderSamplerDesc& desc) {
+    auto* graphics = Graphics::instance;
+    auto& ctx = graphics->renderCtx;
+
+    sampler = ctx.device->createSampler(desc);
 }

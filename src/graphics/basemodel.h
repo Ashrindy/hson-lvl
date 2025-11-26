@@ -95,12 +95,35 @@ namespace ulvl::gfx {
 		RenderBuffer(plume::RenderBuffer* buffer, size_t size) : buffer{ buffer }, size{ size } {}
 	};
 
+	struct Texture {
+		std::unique_ptr<plume::RenderTexture> texture{};
+		std::unique_ptr<plume::RenderTextureView> textureView{};
+		plume::RenderTextureDesc textureDesc{};
+
+		Texture() = default;
+		Texture(plume::RenderTextureDesc& desc);
+		static void setDataBC7(void* data, size_t size, unsigned int width, unsigned int height, plume::RenderFormat format, plume::RenderTexture* texture);
+		void setData(void* data, size_t size);
+	};
+
+	struct Sampler {
+		std::unique_ptr<plume::RenderSampler> sampler{};
+
+		Sampler() = default;
+		Sampler(plume::RenderSamplerDesc& desc);
+	};
+
 	struct DescriptorSet {
 		std::unique_ptr<plume::RenderDescriptorSet> descriptor{};
 		std::vector<RenderBuffer> buffers{};
+		std::vector<Sampler> samplers{};
+		std::vector<Texture> textures{};
 
 		DescriptorSet() = default;
 		DescriptorSet(plume::RenderDescriptorSetDesc& desc);
+
+		Sampler& addSampler(plume::RenderSamplerDesc& desc);
+		Texture& addTexture(plume::RenderTextureDesc& desc);
 	};
 
 	struct Pipeline {
@@ -120,6 +143,7 @@ namespace ulvl::gfx {
 			Depth depth{};
 			std::vector<plume::RenderDescriptorSetDesc> descriptorSetDescs{};
 			std::vector<plume::RenderPushConstantRange> pushConstantDescs{};
+			plume::RenderSamplerDesc samplerDesc{};
 			std::vector<VertexBuffer::Desc> vertexBufferDescs{};
 		};
 
@@ -128,6 +152,7 @@ namespace ulvl::gfx {
 		std::vector<DescriptorSet> descriptors{};
 		std::vector<Buffer> pushConstants{};
 		std::vector<VertexBuffer> vertexBuffers{};
+		std::unique_ptr<plume::RenderSampler> sampler{};
 		IndexBuffer indexBuffer{};
 		Shader vertexShader{};
 		Shader pixelShader{};
@@ -147,6 +172,8 @@ namespace ulvl::gfx {
 		inline void setIndices(std::vector<unsigned short>& indices) { setIndices(indices.data(), indices.size()); }
 		inline void addIndices(std::vector<unsigned short>& indices) { addIndices(indices.data(), indices.size()); }
 		VertexBuffer& getMainVertexBuffer();
+		Sampler* addSampler(plume::RenderSamplerDesc& desc, int descriptorIdx = 0);
+		Texture* addTexture(plume::RenderTextureDesc& desc, int descriptorIdx = 0);
 		void render();
 		void shutdown();
 
