@@ -16,7 +16,7 @@ using namespace ulvl::app;
 ObjectService::Object::Object(const hl::guid& guid, hl::hson::object* object, hl::hson::project* proj) : guid{ guid }, hson{ object }, owner{ proj } {
 	model = new gfx::Model{};
 
-    updateModel();
+    inUpdateModel();
     updateModelMat();
     updateDebugVisual();
 
@@ -189,13 +189,18 @@ std::vector<ObjectService::Object*> ObjectService::Object::getInstances() const
 }
 
 void ObjectService::Object::updateModel() {
+    Application::instance->getService<ObjectService>()->modelUpdateObjects.push_back(this);
+}
 
+void ObjectService::Object::inUpdateModel() {
     ModelData modelData = Application::instance->getService<TemplateManager>()->currentTemplate->getModelData(this);
-    if (modelData.vertices != nullptr) {
+    if (modelData.meshes.size() > 0) {
         model->clearMeshes();
-        model->addMesh(modelData.vertices, modelData.vertexCount, modelData.indices, modelData.indexCount, modelData.vertexInfo.vertexLayout);
-        delete modelData.vertices;
-        delete modelData.indices;
+        for (auto& mesh : modelData.meshes) {
+            model->addMesh(mesh.vertices, mesh.vertexCount, mesh.indices, mesh.indexCount, mesh.vertexInfo.vertexLayout);
+            delete mesh.vertices;
+            delete mesh.indices;
+        }
     }
     else if (model->pipeline.indexBuffer.indices.size() == 0) {
         gfx::BaseVertex vertices[]{
@@ -337,4 +342,15 @@ size_t ObjectService::getObjectNameId(const std::string& type) const {
             id++;
 
     return id;
+}
+
+void ObjectService::AddCallback() {
+    Application::instance->addListener(this);
+}
+
+void ObjectService::PostRenderUI() {
+    for (auto* obj : modelUpdateObjects)
+        obj->inUpdateModel();
+
+    modelUpdateObjects.clear();
 }

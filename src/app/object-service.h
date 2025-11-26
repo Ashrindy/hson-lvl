@@ -43,6 +43,7 @@ namespace ulvl::app {
 				return std::string{ hson->type + " - " + guid.as_string() };
 			}
 			void updateModel();
+			void inUpdateModel();
 			void updateModelMat();
 			void updateDebugVisual();
 			void addDynamicVisual();
@@ -51,6 +52,7 @@ namespace ulvl::app {
 		};
 
 		std::vector<Object*> objects;
+		std::vector<Object*> modelUpdateObjects;
 
 		Object* addObject(const hl::guid& guid, hl::hson::object* hson, hl::hson::project* proj);
 		void removeObject(Object* object, bool removeFromLayer = true);
@@ -60,5 +62,8 @@ namespace ulvl::app {
 		Object* createObject(hl::hson::project* proj, std::string& typeName, hl::set_object_type* type);
 		Object* createInstanceOf(hl::hson::project* proj, const hl::guid& baseObj);
 		size_t getObjectNameId(const std::string& type) const;
+
+		virtual void AddCallback() override;
+		virtual void PostRenderUI() override;
 	};
 }

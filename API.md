@@ -61,10 +61,11 @@ A wrapper for `plume::RenderInputElement`.
 #### Functions
 - `VertexElement(string name, RenderFormat format, int alignedByteOffset)` - a constructor for the class, `alignedByteOffset` is optional
 
-### ModelData
-A class used for setting the model of an object.
+### MeshData
+A class used for setting the mesh of a model.
 Indices are always u16.
 #### Functions
+- `MeshData()` - constructor
 - `GetVertexCount()` - get the set vertex count
 - `SetVertexCount(int count)` - set the vertex count
 - `SetVertices(void* vertices)` - set the vertices
@@ -74,6 +75,11 @@ Indices are always u16.
 - `AddVertexElement(VertexElement elem)` - adds a [vertex element](#vertexelement)
 - `SetVertexLayout(VertexElement[] elems)` - sets the vertex layout
 - `GetVertexStride()` - gets the vertex stride
+
+### ModelData
+A class used for setting the model of an object.
+#### Functions
+- `AddMesh(MeshData mesh)` - adds a mesh to the model
 
 ### HLModel
 A wrapper for `hl::hh::mirage::skeletal_model`.

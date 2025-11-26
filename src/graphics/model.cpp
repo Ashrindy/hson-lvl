@@ -57,19 +57,26 @@ void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices
     auto* gfx = Graphics::instance;
     auto& ctx = gfx->renderCtx;
 
+    auto& mainBuffer = pipeline.getMainVertexBuffer();
+
     bool layoutsDifferent{ false };
     if (vertexLayout.size() > 0)
-        layoutsDifferent = !VertexInfo::compareLayouts(pipeline.vertexBuffers[0].vertexInfo.vertexLayout, vertexLayout);
+        layoutsDifferent = !VertexInfo::compareLayouts(mainBuffer.vertexInfo.vertexLayout, vertexLayout);
 
     void* finalVertices = vertices;
     if (layoutsDifferent)
-        finalVertices = VertexInfo::convertVertices(vertices, vcount, vertexLayout, pipeline.vertexBuffers[0].vertexInfo.vertexLayout);
+        finalVertices = VertexInfo::convertVertices(vertices, vcount, vertexLayout, mainBuffer.vertexInfo.vertexLayout);
 
     int indexOffset = pipeline.indexBuffer.indices.size();
     unsigned int indexC{ icount };
     if (!indices)
         indexC = vcount;
 	meshes.emplace_back(indexOffset, indexC);
+
+    for (int x = 0; x < icount; x++) {
+        auto& y = indices[x];
+        y += mainBuffer.vertexCount;
+    }
 
     pipeline.addVertices(finalVertices, vcount, 0);
     if (indices)

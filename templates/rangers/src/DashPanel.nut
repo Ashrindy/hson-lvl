@@ -68,14 +68,4 @@ class DashPanel {
         local model = HLModelLoadFilepath("E:\\Steam\\steamapps\\common\\SonicFrontiers\\image\\x64\\raw\\stage\\CyberObject\\cmn_obj_dashpanel\\cmn_obj_dashpanel.0.model");
         ModelDataAssign(modelData, model.GetModelData());
     }
-
-    static function AddDynamicDebugVisual(obj, debugVisual, deltaTime) {
-        local position = obj.position();
-        local rotation = Vec4(0, 0, 0, 1);
-        local scale = Vec3(50000, 100, 50000);
-        local color = Vec4(1, 1, 0, 0.2);
-        debugVisual.DrawCube(color, position, rotation, scale, obj);
-    }
-
-    static function DynamicDebugVisualEnd(obj) {}
 }

@@ -7,12 +7,16 @@
 #define RegisterFunc(FUNC) registerFunction(FUNC, #FUNC)
 
 namespace ulvl::app {
-	struct ModelData {
+	struct MeshData {
 		void* vertices{ nullptr };
 		int vertexCount{ -1 };
 		gfx::VertexInfo vertexInfo{};
 		unsigned short* indices{ nullptr };
 		int indexCount{ -1 };
+	};
+
+	struct ModelData {
+		std::vector<MeshData> meshes{};
 	};
 
 	struct SquirrelWrap {

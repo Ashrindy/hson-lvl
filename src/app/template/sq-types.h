@@ -110,18 +110,25 @@ namespace ulvl::app {
 		);
 
 		NEW_CLASS(
+			MeshData,
+			NEW_FUNC("constructor", MeshDataCtor)
+
+			NEW_FUNC("GetVertexCount", MeshDataGetVertexCount)
+			NEW_FUNC("SetVertexCount", MeshDataSetVertexCount)
+			NEW_FUNC("SetVertices", MeshDataSetVertices)
+
+			NEW_FUNC("GetIndexCount", MeshDataGetIndexCount)
+			NEW_FUNC("SetIndexCount", MeshDataSetIndexCount)
+			NEW_FUNC("SetIndices", MeshDataSetIndices)
+
+			NEW_FUNC("AddVertexElement", MeshDataAddVertexElement)
+			NEW_FUNC("SetVertexLayout", MeshDataSetVertexLayout)
+			NEW_FUNC("GetVertexStride", MeshDataGetVertexStride)
+		);
+
+		NEW_CLASS(
 			ModelData,
-			NEW_FUNC("GetVertexCount", ModelDataGetVertexCount)
-			NEW_FUNC("SetVertexCount", ModelDataSetVertexCount)
-			NEW_FUNC("SetVertices", ModelDataSetVertices)
-
-			NEW_FUNC("GetIndexCount", ModelDataGetIndexCount)
-			NEW_FUNC("SetIndexCount", ModelDataSetIndexCount)
-			NEW_FUNC("SetIndices", ModelDataSetIndices)
-
-			NEW_FUNC("AddVertexElement", ModelDataAddVertexElement)
-			NEW_FUNC("SetVertexLayout", ModelDataSetVertexLayout)
-			NEW_FUNC("GetVertexStride", ModelDataGetVertexStride)
+			NEW_FUNC("AddMesh", ModelDataAddMesh)
 		);
 
 		NEW_CLASS(

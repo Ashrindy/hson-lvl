@@ -710,8 +710,16 @@ SQInteger ulvl::app::VertexElementReleaseHook(SQUserPointer p, SQInteger size) {
 	return 0;
 }
 
-SQInteger ulvl::app::ModelDataGetVertexCount(HSQUIRRELVM vm) {
-	ModelData* modelData{};
+SQInteger ulvl::app::MeshDataCtor(HSQUIRRELVM vm) {
+	MeshData* meshData = new MeshData{};
+	sq_setinstanceup(vm, 1, meshData);
+	sq_setreleasehook(vm, 1, MeshDataReleaseHook);
+
+	return 1;
+}
+
+SQInteger ulvl::app::MeshDataGetVertexCount(HSQUIRRELVM vm) {
+	MeshData* modelData{};
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
 
 	sq_pushinteger(vm, modelData->vertexCount);
@@ -719,8 +727,8 @@ SQInteger ulvl::app::ModelDataGetVertexCount(HSQUIRRELVM vm) {
 	return 1;
 }
 
-SQInteger ulvl::app::ModelDataSetVertexCount(HSQUIRRELVM vm) {
-	ModelData* modelData{};
+SQInteger ulvl::app::MeshDataSetVertexCount(HSQUIRRELVM vm) {
+	MeshData* modelData{};
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
 
 	sq_getinteger(vm, 2, (SQInteger*)&modelData->vertexCount);
@@ -728,8 +736,8 @@ SQInteger ulvl::app::ModelDataSetVertexCount(HSQUIRRELVM vm) {
 	return 0;
 }
 
-SQInteger ulvl::app::ModelDataSetVertices(HSQUIRRELVM vm) {
-	ModelData* modelData{};
+SQInteger ulvl::app::MeshDataSetVertices(HSQUIRRELVM vm) {
+	MeshData* modelData{};
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
 
 	if (modelData->vertices) delete modelData->vertices;
@@ -749,8 +757,8 @@ SQInteger ulvl::app::ModelDataSetVertices(HSQUIRRELVM vm) {
 	return 0;
 }
 
-SQInteger ulvl::app::ModelDataGetIndexCount(HSQUIRRELVM vm) {
-	ModelData* modelData{};
+SQInteger ulvl::app::MeshDataGetIndexCount(HSQUIRRELVM vm) {
+	MeshData* modelData{};
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
 
 	sq_pushinteger(vm, modelData->indexCount);
@@ -758,8 +766,8 @@ SQInteger ulvl::app::ModelDataGetIndexCount(HSQUIRRELVM vm) {
 	return 1;
 }
 
-SQInteger ulvl::app::ModelDataSetIndexCount(HSQUIRRELVM vm) {
-	ModelData* modelData{};
+SQInteger ulvl::app::MeshDataSetIndexCount(HSQUIRRELVM vm) {
+	MeshData* modelData{};
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
 
 	sq_getinteger(vm, 2, (SQInteger*)&modelData->indexCount);
@@ -767,8 +775,8 @@ SQInteger ulvl::app::ModelDataSetIndexCount(HSQUIRRELVM vm) {
 	return 0;
 }
 
-SQInteger ulvl::app::ModelDataSetIndices(HSQUIRRELVM vm) {
-	ModelData* modelData{};
+SQInteger ulvl::app::MeshDataSetIndices(HSQUIRRELVM vm) {
+	MeshData* modelData{};
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
 
 	if (modelData->indices) delete modelData->indices;
@@ -786,8 +794,8 @@ SQInteger ulvl::app::ModelDataSetIndices(HSQUIRRELVM vm) {
 	return 0;
 }
 
-SQInteger ulvl::app::ModelDataAddVertexElement(HSQUIRRELVM vm) {
-	ModelData* modelData{};
+SQInteger ulvl::app::MeshDataAddVertexElement(HSQUIRRELVM vm) {
+	MeshData* modelData{};
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
 
 	plume::RenderInputElement* elem{};
@@ -802,8 +810,8 @@ SQInteger ulvl::app::ModelDataAddVertexElement(HSQUIRRELVM vm) {
 	return 0;
 }
 
-SQInteger ulvl::app::ModelDataSetVertexLayout(HSQUIRRELVM vm) {
-	ModelData* modelData{};
+SQInteger ulvl::app::MeshDataSetVertexLayout(HSQUIRRELVM vm) {
+	MeshData* modelData{};
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
 
 	modelData->vertexInfo.vertexLayout.clear();
@@ -830,14 +838,31 @@ SQInteger ulvl::app::ModelDataSetVertexLayout(HSQUIRRELVM vm) {
 	return 0;
 }
 
-SQInteger ulvl::app::ModelDataGetVertexStride(HSQUIRRELVM vm) {
-	ModelData* modelData{};
+SQInteger ulvl::app::MeshDataGetVertexStride(HSQUIRRELVM vm) {
+	MeshData* modelData{};
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&modelData, nullptr, SQFalse);
 
 	modelData->vertexInfo.calcStrideByLayout();
 	sq_pushinteger(vm, modelData->vertexInfo.stride);
 
 	return 1;
+}
+
+SQInteger ulvl::app::MeshDataReleaseHook(SQUserPointer p, SQInteger size) {
+	delete (MeshData*)p;
+	return 0;
+}
+
+SQInteger ulvl::app::ModelDataAddMesh(HSQUIRRELVM vm) {
+	ModelData* model{};
+	sq_getinstanceup(vm, 1, (SQUserPointer*)&model, nullptr, SQFalse);
+
+	MeshData* mesh{};
+	sq_getinstanceup(vm, 2, (SQUserPointer*)&mesh, nullptr, SQFalse);
+
+	model->meshes.emplace_back(*mesh);
+
+	return 0;
 }
 
 SQInteger ulvl::app::ModelDataAssign(HSQUIRRELVM vm) {
@@ -847,11 +872,7 @@ SQInteger ulvl::app::ModelDataAssign(HSQUIRRELVM vm) {
 	ModelData* other{};
 	sq_getinstanceup(vm, 3, (SQUserPointer*)&other, nullptr, SQFalse);
 
-	self->vertexInfo.vertexLayout = std::move(other->vertexInfo.vertexLayout);
-	self->vertices = std::move(other->vertices);
-	self->indices = std::move(other->indices);
-	self->vertexCount = other->vertexCount;
-	self->indexCount = other->indexCount;
+	self->meshes = std::move(other->meshes);
 
 	return 0;
 }
@@ -946,19 +967,21 @@ SQInteger ulvl::app::HLModelGetModelData(HSQUIRRELVM vm) {
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&model, nullptr, SQFalse);
 
 	ModelData* modelData = new ModelData{};
-	auto& mesh = model->meshGroups[0].opaq[0];
+	for (auto& mesh : model->meshGroups[0].opaq) {
+		MeshData& meshData = modelData->meshes.emplace_back();
 
-	for (auto& elem : mesh.vertexElements) modelData->vertexInfo.vertexLayout.emplace_back(toPlume(elem.type), elem.index, 0, toPlume(elem.format), 0, elem.offset);
-	modelData->vertexInfo.calcStrideByLayout();
+		for (auto& elem : mesh.vertexElements) meshData.vertexInfo.vertexLayout.emplace_back(toPlume(elem.type), elem.index, 0, toPlume(elem.format), 0, elem.offset);
+		meshData.vertexInfo.calcStrideByLayout();
 
-	size_t vertSize{ modelData->vertexInfo.stride * mesh.vertexCount };
-	modelData->vertices = new char[vertSize];
-	memcpy(modelData->vertices, mesh.vertices.get(), vertSize);
-	modelData->vertexCount = mesh.vertexCount;
+		size_t vertSize{ meshData.vertexInfo.stride * mesh.vertexCount };
+		meshData.vertices = new char[vertSize];
+		memcpy(meshData.vertices, mesh.vertices.get(), vertSize);
+		meshData.vertexCount = mesh.vertexCount;
 
-	modelData->indices = new unsigned short[mesh.faces.size()];
-	memcpy(modelData->indices, mesh.faces.data(), mesh.faces.size() * sizeof(unsigned short));
-	modelData->indexCount = mesh.faces.size();
+		meshData.indices = new unsigned short[mesh.faces.size()];
+		memcpy(meshData.indices, mesh.faces.data(), mesh.faces.size() * sizeof(unsigned short));
+		meshData.indexCount = mesh.faces.size();
+	}
 
 	sq_pushroottable(vm);
 	sq_pushstring(vm, "ModelData", -1);

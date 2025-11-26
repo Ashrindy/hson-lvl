@@ -4,8 +4,6 @@
 #include <glm/ext/quaternion_float.hpp>
 #include <plume_render_interface.h>
 
-// TODO: Refactor entire model system to be more universal
-
 namespace ulvl::gfx {
 	struct BaseVertex {
 		glm::vec3 position;
@@ -148,6 +146,7 @@ namespace ulvl::gfx {
 		inline void addIndices(unsigned short* indices, unsigned int count) { indexBuffer.addIndices(indices, count); }
 		inline void setIndices(std::vector<unsigned short>& indices) { setIndices(indices.data(), indices.size()); }
 		inline void addIndices(std::vector<unsigned short>& indices) { addIndices(indices.data(), indices.size()); }
+		VertexBuffer& getMainVertexBuffer();
 		void render();
 		void shutdown();
 

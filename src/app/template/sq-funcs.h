@@ -82,15 +82,19 @@ namespace ulvl::app {
 	SQFUNC(VertexElementCtor);
 	RELEASE_HOOK(VertexElement);
 
-	SQFUNC(ModelDataGetVertexCount);
-	SQFUNC(ModelDataSetVertexCount);
-	SQFUNC(ModelDataSetVertices);
-	SQFUNC(ModelDataGetIndexCount);
-	SQFUNC(ModelDataSetIndexCount);
-	SQFUNC(ModelDataSetIndices);
-	SQFUNC(ModelDataAddVertexElement);
-	SQFUNC(ModelDataSetVertexLayout);
-	SQFUNC(ModelDataGetVertexStride);
+	SQFUNC(MeshDataCtor);
+	SQFUNC(MeshDataGetVertexCount);
+	SQFUNC(MeshDataSetVertexCount);
+	SQFUNC(MeshDataSetVertices);
+	SQFUNC(MeshDataGetIndexCount);
+	SQFUNC(MeshDataSetIndexCount);
+	SQFUNC(MeshDataSetIndices);
+	SQFUNC(MeshDataAddVertexElement);
+	SQFUNC(MeshDataSetVertexLayout);
+	SQFUNC(MeshDataGetVertexStride);
+	RELEASE_HOOK(MeshData);
+
+	SQFUNC(ModelDataAddMesh);
 	SQFUNC(ModelDataAssign);
 	RELEASE_HOOK(ModelData);
 

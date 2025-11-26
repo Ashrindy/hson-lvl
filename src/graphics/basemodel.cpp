@@ -240,6 +240,14 @@ void Pipeline::updateVertexBufferViews() {
         vertexBufferViews.push_back(buffer.bufferView);
 }
 
+VertexBuffer& Pipeline::getMainVertexBuffer() {
+    for (auto& buffer : vertexBuffers)
+        if (buffer.slotClass == plume::RenderInputSlotClassification::PER_VERTEX_DATA)
+            return buffer;
+
+    return vertexBuffers.front();
+}
+
 void Pipeline::render() {
     auto* graphics = Graphics::instance;
     auto& ctx = graphics->renderCtx;
@@ -318,7 +326,7 @@ void VertexBuffer::setVertices(void* newVertices, unsigned int count) {
 
 void IndexBuffer::setIndices(unsigned short* newIndices, unsigned int count) {
     indices.clear();
-
+    
     if (newIndices)
         addIndices(newIndices, count);
 }
