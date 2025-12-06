@@ -193,13 +193,15 @@ void ObjectService::Object::updateModel() {
 }
 
 void ObjectService::Object::inUpdateModel() {
-    ModelData modelData = Application::instance->getService<TemplateManager>()->currentTemplate->getModelData(this);
+    gfx::ModelData modelData = Application::instance->getService<TemplateManager>()->currentTemplate->getModelData(this);
     if (modelData.meshes.size() > 0) {
         model->clearMeshes();
         for (auto& mesh : modelData.meshes) {
             model->addMesh(mesh.vertices, mesh.vertexCount, mesh.indices, mesh.indexCount, mesh.vertexInfo.vertexLayout);
             delete mesh.vertices;
+            mesh.vertices = nullptr;
             delete mesh.indices;
+            mesh.indices = nullptr;
         }
     }
     else if (model->pipeline.indexBuffer.indices.size() == 0) {

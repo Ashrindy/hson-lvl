@@ -2,6 +2,8 @@
 #include "basemodel.h"
 
 namespace ulvl::gfx {
+	// TODO: Add support for multi-shader models
+
 	struct InstancedMesh {
 		glm::mat4 worldMatrix;
 		glm::vec4 color;

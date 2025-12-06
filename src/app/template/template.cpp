@@ -4,6 +4,7 @@
 #include <filesystem>
 
 using namespace ulvl::app;
+using namespace ulvl::gfx;
 namespace fs = std::filesystem;
 
 Template::~Template() {

@@ -6,6 +6,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 using namespace ulvl::app;
+using namespace ulvl::gfx;
 
 SQInteger ulvl::app::ToBytes(HSQUIRRELVM vm) {
 	switch (sq_gettype(vm, 2)) {
@@ -967,6 +968,7 @@ SQInteger ulvl::app::HLModelGetModelData(HSQUIRRELVM vm) {
 	sq_getinstanceup(vm, 1, (SQUserPointer*)&model, nullptr, SQFalse);
 
 	ModelData* modelData = new ModelData{};
+	modelData->name = model->name;
 	for (auto& mesh : model->meshGroups[0].opaq) {
 		MeshData& meshData = modelData->meshes.emplace_back();
 

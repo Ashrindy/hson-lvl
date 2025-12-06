@@ -8,6 +8,7 @@
 #include <cstdarg>
 
 using namespace ulvl::app;
+using namespace ulvl::gfx;
 
 void printFunc(HSQUIRRELVM, const SQChar* s, ...) {
     va_list args;
@@ -72,7 +73,7 @@ void SquirrelWrap::registerFunction(SQFUNCTION func, const char* funcName) {
     sq_pop(vm, 1);
 }
 
-ModelData ulvl::app::SquirrelWrap::callGetModelData(ObjectService::Object* obj) {
+ModelData SquirrelWrap::callGetModelData(ObjectService::Object* obj) {
     ModelData modelData{};
 
     sq_pushroottable(vm);

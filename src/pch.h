@@ -14,6 +14,7 @@
 #include <filesystem>
 
 #include "log.h"
+#include "utilities/namehash.h"
 
 #define ARRAY_SIZE(array) sizeof(array) / sizeof(array[0])
 
