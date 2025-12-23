@@ -5,6 +5,7 @@
 namespace ulvl::app {
 	struct MeshData {
 		struct VertSet {
+			// TODO: Needs to be refcounted, as right now it's memory leaking
 			void* vertices{ nullptr };
 			gfx::VertexInfo vertexInfo{};
 
