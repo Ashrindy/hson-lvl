@@ -37,7 +37,7 @@ namespace ulvl::app {
 		~Template();
 		Template(const char* templateName);
 		bool objectTemplateFileExists(ObjectService::Object* obj) const;
-		gfx::ModelData getModelData(ObjectService::Object* obj);
+		ModelData* getModelData(ObjectService::Object* obj);
 		void addDebugVisual(ObjectService::Object* obj);
 		void addDynamicDebugVisual(ObjectService::Object* obj);
 		void dynamicDebugVisualEnd(ObjectService::Object* obj);

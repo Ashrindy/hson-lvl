@@ -284,7 +284,8 @@ void Pipeline::render() {
             descriptor.descriptor->setTexture(x, texture.texture.get(), plume::RenderTextureLayout::SHADER_READ, texture.textureView.get());
     }
 
-    for (auto x = 0; x < descriptors.size(); x++) ctx.commandList->setGraphicsDescriptorSet(descriptors[x].descriptor.get(), x);
+    for (auto x = 0; x < descriptors.size(); x++) 
+        ctx.commandList->setGraphicsDescriptorSet(descriptors[x].descriptor.get(), x);
 }
 
 void Pipeline::shutdown() {

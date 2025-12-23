@@ -43,9 +43,9 @@ void Template::reloadScripts() {
 	}
 }
 
-ModelData Template::getModelData(ObjectService::Object* obj) {
+ModelData* Template::getModelData(ObjectService::Object* obj) {
 	if (!objectTemplateFileExists(obj))
-		return {};
+		return nullptr;
 
 	return squirrelWrap->callGetModelData(obj);
 }

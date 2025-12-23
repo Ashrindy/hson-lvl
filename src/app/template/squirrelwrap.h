@@ -1,8 +1,8 @@
 #pragma once
 #include <squirrel.h>
 #include "../object-service.h"
+#include "../model-service.h"
 #include "../../graphics/basemodel.h"
-#include "../resources/res-model.h"
 #include <filesystem>
 
 #define RegisterFunc(FUNC) registerFunction(FUNC, #FUNC)
@@ -16,7 +16,7 @@ namespace ulvl::app {
 		void init();
 		void loadFile(const std::filesystem::path& path);
 		void registerFunction(SQFUNCTION func, const char* funcName);
-		gfx::ModelData callGetModelData(ObjectService::Object* obj);
+		ModelData* callGetModelData(ObjectService::Object* obj);
 		void callAddDebugVisual(ObjectService::Object* obj);
 		void callAddDynamicDebugVisual(ObjectService::Object* obj);
 		void callDynamicDebugVisualEnd(ObjectService::Object* obj);

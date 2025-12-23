@@ -2,6 +2,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include "graphics.h"
+#include <algorithm>
 
 using namespace ulvl::gfx;
 
@@ -53,19 +54,24 @@ void Model::setWorldMatrix(const glm::mat4& mat) {
     glm::decompose(worldMatrix, scale, rotation, position, skew, perspective);
 }
 
-void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount, const std::vector<plume::RenderInputElement>& vertexLayout) {
+void Model::setModel(app::ModelData* modelData) {
+    clearMeshes();
+
+    for (auto& mesh : modelData->meshes)
+        addMesh(mesh);
+}
+
+void Model::addMesh(app::MeshData& meshData) {
+    auto& mainBuffer = pipeline.getMainVertexBuffer();
+    auto& vertset = meshData.getVertices(mainBuffer.vertexInfo.vertexLayout);
+    addMesh(vertset.vertices, meshData.vertexCount, meshData.indices, meshData.indexCount);
+}
+
+void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount) {
     auto* gfx = Graphics::instance;
     auto& ctx = gfx->renderCtx;
 
     auto& mainBuffer = pipeline.getMainVertexBuffer();
-
-    bool layoutsDifferent{ false };
-    if (vertexLayout.size() > 0)
-        layoutsDifferent = !VertexInfo::compareLayouts(mainBuffer.vertexInfo.vertexLayout, vertexLayout);
-
-    void* finalVertices = vertices;
-    if (layoutsDifferent)
-        finalVertices = VertexInfo::convertVertices(vertices, vcount, vertexLayout, mainBuffer.vertexInfo.vertexLayout);
 
     int indexOffset = pipeline.indexBuffer.indices.size();
     unsigned int indexC{ icount };
@@ -73,14 +79,21 @@ void Model::addMesh(void* vertices, unsigned int vcount, unsigned short* indices
         indexC = vcount;
 	meshes.emplace_back(indexOffset, indexC);
 
-    for (int x = 0; x < icount; x++) {
-        auto& y = indices[x];
-        y += mainBuffer.vertexCount;
+    unsigned short* inds{ nullptr };
+    if (indices) {
+        inds = new unsigned short[icount];
+        memcpy(inds, indices, sizeof(unsigned short) * icount);
     }
 
-    pipeline.addVertices(finalVertices, vcount, 0);
-    if (indices)
-        pipeline.addIndices(indices, icount);
+    for (int x = 0; x < icount; x++) {
+        inds[x] += mainBuffer.vertexCount;
+    }
+
+    pipeline.addVertices(vertices, vcount, 0);
+    if (inds) {
+        pipeline.addIndices(inds, icount);
+        delete[] inds;
+    }
 }
 
 void Model::clearMeshes() {

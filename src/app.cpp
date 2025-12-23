@@ -12,6 +12,7 @@
 #include "app/cleaner-service.h"
 #include "app/debug-visual-service.h"
 #include "app/settings-manager.h"
+#include "app/model-service.h"
 #include <imgui_impl_sdl3.h>
 
 using namespace ulvl;
@@ -39,6 +40,7 @@ void Application::init(int argc, char** argv) {
     addService<app::FileDialogService>();
     addService<app::CleanerService>();
     addService<app::DebugVisualService>();
+    addService<app::ModelService>();
 
     if (argc > 1) {
         fs::path path{ rel_to_exe(argv[1]) };
@@ -53,18 +55,6 @@ void Application::init(int argc, char** argv) {
             }
         }
     }
-
-    /*getService<app::TemplateManager>()->loadTemplate("gens");
-    getService<app::ProjectManager>()->addProject("greenhill");
-    getService<app::ProjectManager>()->projects[0]->loadLayer("D:\\gens-hson\\bin\\Debug\\net8.0\\test.hson");*/
-
-    /*getService<app::TemplateManager>()->loadTemplate("synergy");
-    getService<app::ProjectManager>()->addProject("boom");
-    getService<app::ProjectManager>()->projects[0]->loadLayer("C:\\Users\\honzu\\Desktop\\S01_Design.hson");*/
-
-    /*getService<app::TemplateManager>()->loadTemplate("heroes");
-    getService<app::ProjectManager>()->addProject("heroes");
-    getService<app::ProjectManager>()->projects[0]->loadLayer("C:\\Users\\honzu\\Desktop\\s01_P2.hson");*/
 }
 
 void Application::loop()

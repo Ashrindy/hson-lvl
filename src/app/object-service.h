@@ -8,8 +8,6 @@
 namespace ulvl::app {
 	class ObjectService : public Service, public ApplicationListener {
 	public:
-		// TODO: Rewrite to use ResModel
-
 		struct Object {
 			hl::guid guid;
 			hl::hson::object* hson;

@@ -193,31 +193,38 @@ void ObjectService::Object::updateModel() {
 }
 
 void ObjectService::Object::inUpdateModel() {
-    gfx::ModelData modelData = Application::instance->getService<TemplateManager>()->currentTemplate->getModelData(this);
-    if (modelData.meshes.size() > 0) {
-        model->clearMeshes();
-        for (auto& mesh : modelData.meshes) {
-            model->addMesh(mesh.vertices, mesh.vertexCount, mesh.indices, mesh.indexCount, mesh.vertexInfo.vertexLayout);
-            delete mesh.vertices;
-            mesh.vertices = nullptr;
-            delete mesh.indices;
-            mesh.indices = nullptr;
-        }
+    auto* modelData = Application::instance->getService<TemplateManager>()->currentTemplate->getModelData(this);
+    if (modelData) {
+        model->setModel(modelData);
     }
     else if (model->pipeline.indexBuffer.indices.size() == 0) {
-        gfx::BaseVertex vertices[]{
-            {{-0.5f, -0.5f, 0.0f}},
-            {{ 0.5f, -0.5f, 0.0f}},
-            {{ 0.5f,  0.5f, 0.0f}},
-            {{-0.5f,  0.5f, 0.0f}}
-        };
+        auto* mdlServ = Application::instance->getService<ModelService>();
+        ModelData* mdlData = mdlServ->getModel(NAME_HASH("defaultObjectMdl"));
+        if (mdlData->uninited()) {
+            auto& mesh = mdlData->meshes.emplace_back();
 
-        unsigned short indices[]{
-            0, 1, 2,
-            2, 3, 0
-        };
+            gfx::BaseVertex vertices[]{
+                {{-0.5f, -0.5f, 0.0f}},
+                {{ 0.5f, -0.5f, 0.0f}},
+                {{ 0.5f,  0.5f, 0.0f}},
+                {{-0.5f,  0.5f, 0.0f}}
+            };
 
-        model->addMesh(vertices, ARRAY_SIZE(vertices), indices, ARRAY_SIZE(indices));
+            unsigned short indices[]{
+                0, 1, 2,
+                2, 3, 0
+            };
+
+            auto& vertset = mesh.getVertices({
+                { "POSITION", 0, 0, plume::RenderFormat::R32G32B32_FLOAT, 0, 0 },
+            });
+            vertset.setVertices(vertices);
+            mesh.vertexCount = ARRAY_SIZE(vertices);
+            mesh.setIndices(indices);
+            mdlData->inited = true;
+        }
+
+        model->setModel(mdlData);
     }
 }
 

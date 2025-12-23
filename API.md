@@ -68,13 +68,13 @@ Indices are always u16.
 - `MeshData()` - constructor
 - `GetVertexCount()` - get the set vertex count
 - `SetVertexCount(int count)` - set the vertex count
-- `SetVertices(void* vertices)` - set the vertices
+- `SetVertices(void* vertices)` - set the vertices (not functional as of now)
 - `GetIndexCount()` - get the set index count
 - `SetIndexCount(int count)` - set the index count
 - `SetIndices(unsigned short* indices)` - set the indices
-- `AddVertexElement(VertexElement elem)` - adds a [vertex element](#vertexelement)
-- `SetVertexLayout(VertexElement[] elems)` - sets the vertex layout
-- `GetVertexStride()` - gets the vertex stride
+- `AddVertexElement(VertexElement elem)` - adds a [vertex element](#vertexelement) (not functional as of now)
+- `SetVertexLayout(VertexElement[] elems)` - sets the vertex layout (not functional as of now)
+- `GetVertexStride()` - gets the vertex stride (not functional as of now)
 
 ### ModelData
 A class used for setting the model of an object.

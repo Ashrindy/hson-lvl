@@ -73,8 +73,8 @@ void SquirrelWrap::registerFunction(SQFUNCTION func, const char* funcName) {
     sq_pop(vm, 1);
 }
 
-ModelData SquirrelWrap::callGetModelData(ObjectService::Object* obj) {
-    ModelData modelData{};
+ModelData* SquirrelWrap::callGetModelData(ObjectService::Object* obj) {
+    ModelData* modelData{ nullptr };
 
     sq_pushroottable(vm);
     sq_pushstring(vm, obj->hson->type.c_str(), -1);

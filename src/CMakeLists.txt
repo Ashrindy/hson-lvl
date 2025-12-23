@@ -49,8 +49,8 @@ add_executable (${HE_LEVEL_NAME}
 	"app/cleaner-service.cpp"
 	"app/settings-manager.h"
 	"app/settings-manager.cpp"
-	"app/resource-manager.h"
-	"app/resource-manager.cpp"
+	"app/model-service.h"
+	"app/model-service.cpp"
 
 	"app/template/template.h"
 	"app/template/template.cpp"
@@ -59,10 +59,6 @@ add_executable (${HE_LEVEL_NAME}
 	"app/template/sq-funcs.h"
 	"app/template/sq-funcs.cpp"
 	"app/template/sq-types.h" 
-
-	"app/resources/resource.h"
-	"app/resources/res-model.h" 
-	"app/resources/res-model.cpp" 
 	
     "panels/object-inspector.h"
 	"panels/object-inspector.cpp" 

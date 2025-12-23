@@ -1,6 +1,7 @@
 #pragma once
 #include "../math/aabb.h"
 #include "basemodel.h"
+#include "../app/model-service.h"
 
 namespace ulvl::gfx {
 	struct Mesh {
@@ -33,7 +34,9 @@ namespace ulvl::gfx {
 		void setScale(const glm::vec3& scale);
 		void setWorldMatrix(const glm::mat4& mat);
 
-		void addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount, const std::vector<plume::RenderInputElement>& vertexLayout = {});
+		void setModel(app::ModelData* modelData);
+		void addMesh(app::MeshData& meshData);
+		void addMesh(void* vertices, unsigned int vcount, unsigned short* indices, unsigned int icount);
 		void clearMeshes();
 		inline const glm::mat4& getWorldMatrix() const { return worldMatrix; }
 
